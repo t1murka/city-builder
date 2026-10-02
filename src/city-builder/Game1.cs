@@ -8,6 +8,8 @@ namespace city_builder
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
+        private Texture2D _grassTexture;
+
 
         public Game1()
         {
@@ -27,7 +29,7 @@ namespace city_builder
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
 
-            // TODO: use this.Content to load your game content here
+            _grassTexture = Content.Load<Texture2D>("Textures/Tiles/pasto");
         }
 
         protected override void Update(GameTime gameTime)
@@ -42,9 +44,22 @@ namespace city_builder
 
         protected override void Draw(GameTime gameTime)
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.DarkSlateGray);
 
-            // TODO: Add your drawing code here
+            Vector2 tilePosition = new Vector2(
+                GraphicsDevice.Viewport.Width / 2f - _grassTexture.Width / 2f,
+                GraphicsDevice.Viewport.Height / 2f - _grassTexture.Height / 2f
+            );
+
+            _spriteBatch.Begin();
+
+            _spriteBatch.Draw(
+                _grassTexture,
+                tilePosition,
+                Color.White
+            );
+
+            _spriteBatch.End();
 
             base.Draw(gameTime);
         }
