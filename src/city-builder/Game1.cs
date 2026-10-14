@@ -13,6 +13,8 @@ public sealed class Game1 : Game
     private SpriteBatch _spriteBatch = null!;
     private IsometricMapRenderer _mapRenderer = null!;
     private CellPosition? _hoveredCell;
+    private MouseState _previousMouse;
+    private bool _wasActive;
 
     public Game1()
     {
@@ -32,7 +34,9 @@ public sealed class Game1 : Game
     {
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         var grassTexture = Content.Load<Texture2D>("Textures/Tiles/pasto");
-        _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture);
+        var buildingsTexture = Content.Load<Texture2D>("Textures/Buildings/pixel-city");
+        _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture, buildingsTexture);
+        _previousMouse = Mouse.GetState();
     }
 
     protected override void Update(GameTime gameTime)
@@ -53,11 +57,20 @@ public sealed class Game1 : Game
                 ? cell
                 : null;
 
-        if (_hoveredCell != hoveredCell)
+        var leftClick = mouse.LeftButton == ButtonState.Pressed
+            && _previousMouse.LeftButton == ButtonState.Released;
+        var buildingPlaced = IsActive && _wasActive && leftClick
+            && hoveredCell is { } selectedCell
+            && _map.TryPlaceBuilding(selectedCell, BuildingType.House);
+
+        if (_hoveredCell != hoveredCell || buildingPlaced)
         {
             _hoveredCell = hoveredCell;
             UpdateWindowTitle();
         }
+
+        _previousMouse = mouse;
+        _wasActive = IsActive;
 
         base.Update(gameTime);
     }
@@ -83,10 +96,13 @@ public sealed class Game1 : Game
 
     private void UpdateWindowTitle()
     {
-        var selection = _hoveredCell is { } cell
-            ? $"Celda ({cell.X}, {cell.Y})"
-            : "Mueve el cursor sobre el mapa";
+        var selection = "Mueve el cursor sobre el mapa";
+        if (_hoveredCell is { } cell)
+        {
+            var availability = _map.CanPlaceBuilding(cell) ? "libre" : "ocupada";
+            selection = $"Celda ({cell.X}, {cell.Y}): {availability}";
+        }
 
-        Window.Title = $"Constructor de ciudades | Mapa {_map.Width}x{_map.Height} | {selection} | Esc: salir";
+        Window.Title = $"city builder | Casas: {_map.BuildingCount} | {selection} | Clic izq.: construir | Esc: salir";
     }
 }

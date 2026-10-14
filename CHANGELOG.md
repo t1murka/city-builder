@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Agregado
+- Construcción de casas con vista previa, validación de celdas ocupadas y orden de dibujo isométrico.
 - Mapa isométrico de 10×10 celdas con estado en un array bidimensional.
 - Resaltado de celdas, coordenadas en el título y adaptación al tamaño de la ventana.
 - Separación entre estado, geometría y representación gráfica.

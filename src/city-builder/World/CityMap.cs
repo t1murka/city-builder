@@ -8,6 +8,7 @@ public sealed class CityMap
 
     public int Width { get; }
     public int Height { get; }
+    public int BuildingCount { get; private set; }
 
     public CityMap(int width, int height)
     {
@@ -32,4 +33,24 @@ public sealed class CityMap
     public bool Contains(CellPosition position) =>
         position.X >= 0 && position.X < Width
         && position.Y >= 0 && position.Y < Height;
+
+    public bool CanPlaceBuilding(CellPosition position) =>
+        Contains(position) && _cells[position.X, position.Y].Building is null;
+
+    public bool TryPlaceBuilding(CellPosition position, BuildingType building)
+    {
+        if (!Enum.IsDefined(building))
+        {
+            throw new ArgumentOutOfRangeException(nameof(building));
+        }
+
+        if (!CanPlaceBuilding(position))
+        {
+            return false;
+        }
+
+        _cells[position.X, position.Y] = _cells[position.X, position.Y] with { Building = building };
+        BuildingCount++;
+        return true;
+    }
 }

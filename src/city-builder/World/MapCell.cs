@@ -1,3 +1,3 @@
 namespace city_builder.World;
 
-public readonly record struct MapCell(TerrainType Terrain);
+public readonly record struct MapCell(TerrainType Terrain, BuildingType? Building = null);

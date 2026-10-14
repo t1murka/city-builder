@@ -13,7 +13,10 @@ public sealed class IsometricMapRenderer : IDisposable
     private const int BaseTileHeight = 32;
     private const int MapPadding = 48;
 
+    private static readonly Rectangle HouseSource = new(80, 398, 34, 27);
+
     private readonly Texture2D _grassTexture;
+    private readonly Texture2D _buildingsTexture;
     private readonly Texture2D _diamondTexture;
     private readonly Texture2D _pixelTexture;
     private IsometricProjection _projection = new(BaseTileWidth, BaseTileHeight, NumericsVector2.Zero);
@@ -21,9 +24,10 @@ public sealed class IsometricMapRenderer : IDisposable
     private int _mapWidth;
     private int _mapHeight;
 
-    public IsometricMapRenderer(GraphicsDevice graphicsDevice, Texture2D grassTexture)
+    public IsometricMapRenderer(GraphicsDevice graphicsDevice, Texture2D grassTexture, Texture2D buildingsTexture)
     {
         _grassTexture = grassTexture;
+        _buildingsTexture = buildingsTexture;
         _diamondTexture = CreateDiamondTexture(graphicsDevice);
         _pixelTexture = new Texture2D(graphicsDevice, 1, 1);
         _pixelTexture.SetData(new[] { Color.White });
@@ -87,16 +91,60 @@ public sealed class IsometricMapRenderer : IDisposable
 
         if (hoveredCell is { } selectedCell && map.Contains(selectedCell))
         {
-            DrawTile(spriteBatch, _diamondTexture, selectedCell, new Color(255, 220, 100) * 0.22f);
-            DrawOutline(spriteBatch, selectedCell, new Color(255, 220, 100), 2f);
+            var color = map.CanPlaceBuilding(selectedCell) ? new Color(120, 245, 150) : new Color(255, 100, 100);
+            DrawTile(spriteBatch, _diamondTexture, selectedCell, color * 0.22f);
+            DrawOutline(spriteBatch, selectedCell, color, 2f);
         }
+
+        DrawBuildings(spriteBatch, map, hoveredCell);
     }
 
     public void Dispose()
     {
-        // The grass texture belongs to ContentManager; only generated textures are disposed here.
+        // Loaded textures belong to ContentManager; only generated textures are disposed here.
         _diamondTexture.Dispose();
         _pixelTexture.Dispose();
+    }
+
+    private void DrawBuildings(SpriteBatch spriteBatch, CityMap map, CellPosition? hoveredCell)
+    {
+        // Diagonal traversal draws both buildings and the preview from back to front.
+        for (var depth = 0; depth < map.Width + map.Height - 1; depth++)
+        {
+            var firstX = Math.Max(0, depth - map.Height + 1);
+            var lastX = Math.Min(map.Width - 1, depth);
+
+            for (var x = firstX; x <= lastX; x++)
+            {
+                var cell = new CellPosition(x, depth - x);
+                if (map[cell].Building is { } building)
+                {
+                    DrawBuilding(spriteBatch, building, cell, Color.White);
+                }
+
+                if (hoveredCell == cell)
+                {
+                    var color = map.CanPlaceBuilding(cell) ? new Color(150, 255, 180) : new Color(255, 100, 100);
+                    DrawBuilding(spriteBatch, BuildingType.House, cell, color * 0.65f);
+                }
+            }
+        }
+    }
+
+    private void DrawBuilding(SpriteBatch spriteBatch, BuildingType building, CellPosition cell, Color color)
+    {
+        var source = building switch
+        {
+            BuildingType.House => HouseSource,
+            _ => throw new InvalidOperationException("Unsupported building type.")
+        };
+
+        var top = _projection.CellToScreen(cell);
+        var bottom = new Vector2(top.X, top.Y + _projection.TileHeight);
+        var origin = new Vector2(source.Width / 2f, source.Height);
+        var scale = _projection.TileWidth / source.Width;
+
+        spriteBatch.Draw(_buildingsTexture, bottom, source, color, 0f, origin, scale, SpriteEffects.None, 0f);
     }
 
     private void DrawTile(SpriteBatch spriteBatch, Texture2D texture, CellPosition cell, Color color)
