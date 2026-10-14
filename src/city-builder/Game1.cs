@@ -1,67 +1,92 @@
-﻿using Microsoft.Xna.Framework;
+using city_builder.Rendering;
+using city_builder.World;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace city_builder
+namespace city_builder;
+
+public sealed class Game1 : Game
 {
-    public class Game1 : Game
+    private readonly GraphicsDeviceManager _graphics;
+    private readonly CityMap _map = new(10, 10);
+    private SpriteBatch _spriteBatch = null!;
+    private IsometricMapRenderer _mapRenderer = null!;
+    private CellPosition? _hoveredCell;
+
+    public Game1()
     {
-        private GraphicsDeviceManager _graphics;
-        private SpriteBatch _spriteBatch;
-        private Texture2D _grassTexture;
-
-
-        public Game1()
+        _graphics = new GraphicsDeviceManager(this)
         {
-            _graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
-            IsMouseVisible = true;
+            PreferredBackBufferWidth = 960,
+            PreferredBackBufferHeight = 640
+        };
+
+        Content.RootDirectory = "Content";
+        IsMouseVisible = true;
+        Window.AllowUserResizing = true;
+        UpdateWindowTitle();
+    }
+
+    protected override void LoadContent()
+    {
+        _spriteBatch = new SpriteBatch(GraphicsDevice);
+        var grassTexture = Content.Load<Texture2D>("Textures/Tiles/pasto");
+        _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture);
+    }
+
+    protected override void Update(GameTime gameTime)
+    {
+        if (IsActive && (Keyboard.GetState().IsKeyDown(Keys.Escape)
+            || GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed))
+        {
+            Exit();
         }
 
-        protected override void Initialize()
-        {
-            // TODO: Add your initialization logic here
+        _mapRenderer.UpdateLayout(_map, GraphicsDevice.Viewport.Bounds);
 
-            base.Initialize();
+        var mouse = Mouse.GetState();
+        var mousePosition = new System.Numerics.Vector2(mouse.X, mouse.Y);
+        CellPosition? hoveredCell = IsActive
+            && GraphicsDevice.Viewport.Bounds.Contains(mouse.X, mouse.Y)
+            && _mapRenderer.TryGetCell(_map, mousePosition, out var cell)
+                ? cell
+                : null;
+
+        if (_hoveredCell != hoveredCell)
+        {
+            _hoveredCell = hoveredCell;
+            UpdateWindowTitle();
         }
 
-        protected override void LoadContent()
-        {
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
+        base.Update(gameTime);
+    }
 
-            _grassTexture = Content.Load<Texture2D>("Textures/Tiles/pasto");
-        }
+    protected override void Draw(GameTime gameTime)
+    {
+        GraphicsDevice.Clear(new Color(24, 32, 42));
+        _mapRenderer.UpdateLayout(_map, GraphicsDevice.Viewport.Bounds);
 
-        protected override void Update(GameTime gameTime)
-        {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _mapRenderer.Draw(_spriteBatch, _map, _hoveredCell);
+        _spriteBatch.End();
 
-            // TODO: Add your update logic here
+        base.Draw(gameTime);
+    }
 
-            base.Update(gameTime);
-        }
+    protected override void UnloadContent()
+    {
+        _mapRenderer?.Dispose();
+        _spriteBatch?.Dispose();
+        base.UnloadContent();
+    }
 
-        protected override void Draw(GameTime gameTime)
-        {
-            GraphicsDevice.Clear(Color.DarkSlateGray);
+    private void UpdateWindowTitle()
+    {
+        var selection = _hoveredCell is { } cell
+            ? $"Celda ({cell.X}, {cell.Y})"
+            : "Mueve el cursor sobre el mapa";
 
-            Vector2 tilePosition = new Vector2(
-                GraphicsDevice.Viewport.Width / 2f - _grassTexture.Width / 2f,
-                GraphicsDevice.Viewport.Height / 2f - _grassTexture.Height / 2f
-            );
-
-            _spriteBatch.Begin();
-
-            _spriteBatch.Draw(
-                _grassTexture,
-                tilePosition,
-                Color.White
-            );
-
-            _spriteBatch.End();
-
-            base.Draw(gameTime);
-        }
+        Window.Title = $"Constructor de ciudades | Mapa {_map.Width}x{_map.Height} | {selection} | Esc: salir";
     }
 }
