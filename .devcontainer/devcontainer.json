@@ -1,0 +1,26 @@
+{
+  "name": "City Builder MonoGame",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:1-8.0-bookworm",
+  "features": {
+    "ghcr.io/devcontainers/features/desktop-lite:1": {},
+    "ghcr.io/devcontainers/features/dotnet:2": {
+      "version": "6.0",
+      "additionalVersions": "7.0, 8.0"
+    }
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp"
+      ]
+    }
+  },
+  "postCreateCommand": "sudo apt-get update && sudo apt-get install -y xvfb x11vnc novnc websockify fluxbox libgl1-mesa-dri libglx-mesa0 libgl1 mesa-utils libfreetype6 fontconfig libopenal1 && cd src/city-builder && dotnet tool restore",
+  "forwardPorts": [6080],
+  "portsAttributes": {
+    "6080": {
+      "label": "Game Window (noVNC)"
+    }
+  }
+}
