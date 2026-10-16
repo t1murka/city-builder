@@ -37,7 +37,7 @@ public sealed class CityMap
     public bool CanPlaceBuilding(CellPosition position) =>
         Contains(position) && _cells[position.X, position.Y].Building is null;
 
-    public bool TryPlaceBuilding(CellPosition position, BuildingType building)
+    internal bool TryPlaceBuilding(CellPosition position, BuildingType building)
     {
         if (!Enum.IsDefined(building))
         {

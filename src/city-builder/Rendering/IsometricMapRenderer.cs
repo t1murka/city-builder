@@ -63,7 +63,7 @@ public sealed class IsometricMapRenderer : IDisposable
         return map.Contains(cell);
     }
 
-    public void Draw(SpriteBatch spriteBatch, CityMap map, CellPosition? hoveredCell)
+    public void Draw(SpriteBatch spriteBatch, CityMap map, CellPosition? hoveredCell, bool canBuild)
     {
         for (var x = 0; x < map.Width; x++)
         {
@@ -91,12 +91,12 @@ public sealed class IsometricMapRenderer : IDisposable
 
         if (hoveredCell is { } selectedCell && map.Contains(selectedCell))
         {
-            var color = map.CanPlaceBuilding(selectedCell) ? new Color(120, 245, 150) : new Color(255, 100, 100);
+            var color = canBuild ? new Color(120, 245, 150) : new Color(255, 100, 100);
             DrawTile(spriteBatch, _diamondTexture, selectedCell, color * 0.22f);
             DrawOutline(spriteBatch, selectedCell, color, 2f);
         }
 
-        DrawBuildings(spriteBatch, map, hoveredCell);
+        DrawBuildings(spriteBatch, map, hoveredCell, canBuild);
     }
 
     public void Dispose()
@@ -106,7 +106,7 @@ public sealed class IsometricMapRenderer : IDisposable
         _pixelTexture.Dispose();
     }
 
-    private void DrawBuildings(SpriteBatch spriteBatch, CityMap map, CellPosition? hoveredCell)
+    private void DrawBuildings(SpriteBatch spriteBatch, CityMap map, CellPosition? hoveredCell, bool canBuild)
     {
         // Diagonal traversal draws both buildings and the preview from back to front.
         for (var depth = 0; depth < map.Width + map.Height - 1; depth++)
@@ -124,7 +124,7 @@ public sealed class IsometricMapRenderer : IDisposable
 
                 if (hoveredCell == cell)
                 {
-                    var color = map.CanPlaceBuilding(cell) ? new Color(150, 255, 180) : new Color(255, 100, 100);
+                    var color = canBuild ? new Color(150, 255, 180) : new Color(255, 100, 100);
                     DrawBuilding(spriteBatch, BuildingType.House, cell, color * 0.65f);
                 }
             }
