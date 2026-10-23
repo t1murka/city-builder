@@ -7,6 +7,8 @@ public sealed class CityState
     public CityMap Map { get; }
     public int Money { get; private set; }
     public int Population { get; private set; }
+    public int Turn { get; private set; } = 1;
+    public int IncomePerTurn { get; private set; }
 
     public CityState(int width, int height, int startingMoney = 1000)
     {
@@ -50,6 +52,15 @@ public sealed class CityState
         var definition = BuildingCatalog.Get(type);
         Money -= definition.Cost;
         Population += definition.PopulationBenefit;
+        IncomePerTurn += definition.IncomePerTurn;
         return ConstructionResult.Success;
+    }
+
+    public void AdvanceTurn()
+    {
+        var nextMoney = checked(Money + IncomePerTurn);
+        var nextTurn = checked(Turn + 1);
+        Money = nextMoney;
+        Turn = nextTurn;
     }
 }

@@ -3,6 +3,8 @@
 ## Sin publicar
 
 ### Agregado
+- Turnos con ingresos de $10 por casa y botón para avanzar al siguiente turno.
+- Indicadores de turno actual e ingresos por turno en el panel de recursos.
 - Dinero inicial, costo de construcción y crecimiento de población por casa.
 - Panel compacto de recursos y aviso de dinero insuficiente.
 - Construcción de casas con vista previa, validación de celdas ocupadas y orden de dibujo isométrico.

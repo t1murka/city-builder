@@ -17,6 +17,7 @@ public sealed class Game1 : Game
     private CellPosition? _hoveredCell;
     private MouseState _previousMouse;
     private bool _wasActive;
+    private bool _nextTurnHovered;
     private string? _message;
     private double _messageSeconds;
 
@@ -62,6 +63,8 @@ public sealed class Game1 : Game
         _mapRenderer.UpdateLayout(_city.Map, mapBounds);
 
         var mouse = Mouse.GetState();
+        _nextTurnHovered = IsActive
+            && _hud.GetNextTurnButtonBounds(GraphicsDevice.Viewport.Bounds).Contains(mouse.Position);
         var mousePosition = new System.Numerics.Vector2(mouse.X, mouse.Y);
         _hoveredCell = IsActive && mapBounds.Contains(mouse.X, mouse.Y)
             && _mapRenderer.TryGetCell(_city.Map, mousePosition, out var cell)
@@ -70,16 +73,25 @@ public sealed class Game1 : Game
 
         var leftClick = mouse.LeftButton == ButtonState.Pressed
             && _previousMouse.LeftButton == ButtonState.Released;
-        if (IsActive && _wasActive && leftClick && _hoveredCell is { } selectedCell)
+        if (IsActive && _wasActive && leftClick)
         {
-            var result = _city.TryConstruct(selectedCell, BuildingType.House);
-            _message = result switch
+            if (_nextTurnHovered)
             {
-                ConstructionResult.InsufficientFunds => "Dinero insuficiente",
-                ConstructionResult.Occupied => "Esta celda está ocupada",
-                _ => null
-            };
-            _messageSeconds = _message is null ? 0 : 2.5;
+                _city.AdvanceTurn();
+                _message = null;
+                _messageSeconds = 0;
+            }
+            else if (_hoveredCell is { } selectedCell)
+            {
+                var result = _city.TryConstruct(selectedCell, BuildingType.House);
+                _message = result switch
+                {
+                    ConstructionResult.InsufficientFunds => "Dinero insuficiente",
+                    ConstructionResult.Occupied => "Esta celda está ocupada",
+                    _ => null
+                };
+                _messageSeconds = _message is null ? 0 : 2.5;
+            }
         }
 
         _previousMouse = mouse;
@@ -100,7 +112,7 @@ public sealed class Game1 : Game
         _spriteBatch.End();
 
         _spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
-        _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _message);
+        _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _message, _nextTurnHovered);
         _spriteBatch.End();
 
         base.Draw(gameTime);

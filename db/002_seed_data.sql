@@ -1,7 +1,7 @@
 USE city_builder_mini;
 
 INSERT INTO building_types (nombre, costo, beneficio_poblacion, beneficio_dinero, requisitos) VALUES 
-('Casa de Madera', 100, 4, 0, 'Ninguno'),
+('Casa de Madera', 100, 4, 10, 'Ninguno'),
 ('Edificio de Apartamentos', 500, 20, 0, 'Requiere Agua y Electricidad'),
 ('Tienda Local', 250, 0, 50, 'Requiere Población > 10'),
 ('Fábrica de Carbón', 1000, -5, 300, 'Lejos de zona residencial'),
