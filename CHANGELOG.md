@@ -14,3 +14,6 @@
 ### Modificado
 - Versiones de MonoGame y herramientas fijadas a 3.8.4.1 para obtener compilaciones consistentes.
 - Uso del tile de césped existente con una huella isométrica de 64×32.
+
+### Corregido
+- Formato ICO del icono de la aplicación, con tamaños de 16 a 256 píxeles.
