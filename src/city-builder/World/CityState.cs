@@ -40,6 +40,11 @@ public sealed class CityState
             return ConstructionResult.Occupied;
         }
 
+        if (Population < definition.MinimumPopulation)
+        {
+            return ConstructionResult.InsufficientPopulation;
+        }
+
         return Money >= definition.Cost
             ? ConstructionResult.Success
             : ConstructionResult.InsufficientFunds;

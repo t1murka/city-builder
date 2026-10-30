@@ -17,6 +17,7 @@ public sealed class Game1 : Game
     private IsometricMapRenderer _mapRenderer = null!;
     private GameHud _hud = null!;
     private CellPosition? _hoveredCell;
+    private BuildingType _selectedBuilding = BuildingType.House;
     private MouseState _previousMouse;
     private bool _wasActive;
     private bool _actionHovered;
@@ -86,6 +87,12 @@ public sealed class Game1 : Game
                     StartNewGame();
                 }
             }
+            else if (_hud.TryGetBuildingAt(GraphicsDevice.Viewport.Bounds, mouse.Position, out var building))
+            {
+                _selectedBuilding = building;
+                _message = null;
+                _messageSeconds = 0;
+            }
             else if (_actionHovered)
             {
                 _city.AdvanceTurn();
@@ -98,11 +105,13 @@ public sealed class Game1 : Game
             }
             else if (_hoveredCell is { } selectedCell)
             {
-                var result = _city.TryConstruct(selectedCell, BuildingType.House);
+                var result = _city.TryConstruct(selectedCell, _selectedBuilding);
                 _message = result switch
                 {
                     ConstructionResult.InsufficientFunds => "Dinero insuficiente",
                     ConstructionResult.Occupied => "Esta celda está ocupada",
+                    ConstructionResult.InsufficientPopulation =>
+                        $"Se necesitan más de {BuildingCatalog.Get(_selectedBuilding).MinimumPopulation - 1} habitantes",
                     _ => null
                 };
                 _messageSeconds = _message is null ? 0 : 2.5;
@@ -120,14 +129,14 @@ public sealed class Game1 : Game
         GraphicsDevice.Clear(new Color(24, 32, 42));
         _mapRenderer.UpdateLayout(_city.Map, _hud.GetMapBounds(GraphicsDevice.Viewport.Bounds));
         var canBuild = _hoveredCell is { } cell
-            && _city.CheckConstruction(cell, BuildingType.House) == ConstructionResult.Success;
+            && _city.CheckConstruction(cell, _selectedBuilding) == ConstructionResult.Success;
 
         _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
-        _mapRenderer.Draw(_spriteBatch, _city.Map, _hoveredCell, canBuild);
+        _mapRenderer.Draw(_spriteBatch, _city.Map, _hoveredCell, _selectedBuilding, canBuild);
         _spriteBatch.End();
 
         _spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
-        _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _message, _actionHovered);
+        _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _selectedBuilding, _message, _actionHovered);
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -137,6 +146,7 @@ public sealed class Game1 : Game
     {
         _city = new CityState(MapWidth, MapHeight);
         _hoveredCell = null;
+        _selectedBuilding = BuildingType.House;
         _actionHovered = false;
         _message = null;
         _messageSeconds = 0;

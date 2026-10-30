@@ -12,11 +12,13 @@ public sealed class GameHud : IDisposable
     private const int RowHeight = 36;
     private const int ControlHeight = 32;
     private const int NextTurnCellIndex = 5;
+    private const int BuildingCellIndex = 4;
     private const int CompactWidth = 600;
     private const int ResultPanelWidth = 420;
     private const int ResultPanelHeight = 260;
     private readonly SpriteFont _font;
     private readonly Texture2D _pixel;
+    private static readonly BuildingType[] BuildingOptions = { BuildingType.House, BuildingType.Shop };
 
     public GameHud(GraphicsDevice graphicsDevice, SpriteFont font)
     {
@@ -50,24 +52,54 @@ public sealed class GameHud : IDisposable
             width, (int)(36 * scale));
     }
 
-    public void Draw(SpriteBatch spriteBatch, Rectangle viewport, CityState city, string? message,
-        bool actionHovered)
+    public Rectangle GetBuildingButtonBounds(Rectangle viewport, BuildingType building)
+    {
+        var index = Array.IndexOf(BuildingOptions, building);
+        if (index < 0)
+        {
+            throw new ArgumentOutOfRangeException(nameof(building));
+        }
+
+        var columns = GetColumnCount(viewport.Width);
+        var columnWidth = GetColumnWidth(viewport.Width);
+        var width = Math.Max(1, ((int)columnWidth - 14) / BuildingOptions.Length);
+        var bounds = new Rectangle(
+            viewport.X + Padding + (int)(BuildingCellIndex % columns * columnWidth) + index * (width + 6),
+            viewport.Y + VerticalPadding + BuildingCellIndex / columns * RowHeight, width, ControlHeight);
+        return viewport.Contains(bounds) ? bounds : Rectangle.Empty;
+    }
+
+    public bool TryGetBuildingAt(Rectangle viewport, Point position, out BuildingType building)
+    {
+        foreach (var option in BuildingOptions)
+        {
+            if (GetBuildingButtonBounds(viewport, option).Contains(position))
+            {
+                building = option;
+                return true;
+            }
+        }
+
+        building = default;
+        return false;
+    }
+
+    public void Draw(SpriteBatch spriteBatch, Rectangle viewport, CityState city, BuildingType selectedBuilding,
+        string? message, bool actionHovered)
     {
         var panelHeight = GetPanelHeight(viewport.Width);
         var panel = new Rectangle(viewport.X, viewport.Y, viewport.Width, Math.Min(panelHeight, viewport.Height));
         spriteBatch.Draw(_pixel, panel, new Color(31, 42, 54));
 
         var availableWidth = Math.Max(1, viewport.Width - Padding * 2);
-        var cost = BuildingCatalog.Get(BuildingType.House).Cost;
+        var definition = BuildingCatalog.Get(selectedBuilding);
         var textColor = new Color(230, 236, 242);
-        var costColor = city.Money >= cost ? new Color(176, 190, 203) : new Color(250, 142, 132);
         var incomeColor = new Color(154, 218, 173);
 
         DrawCell(spriteBatch, viewport, 0, $"Dinero: ${city.Money}", textColor);
         DrawCell(spriteBatch, viewport, 1, $"Población: {city.Population}", textColor);
-        DrawCell(spriteBatch, viewport, 2, $"Casa: ${cost}", costColor);
-        DrawCell(spriteBatch, viewport, 3, $"Turno: {city.Turn}/{CityState.MaxTurns}", textColor);
-        DrawCell(spriteBatch, viewport, 4, $"Ingreso/turno: ${city.IncomePerTurn}", incomeColor);
+        DrawCell(spriteBatch, viewport, 2, $"Turno: {city.Turn}/{CityState.MaxTurns}", textColor);
+        DrawCell(spriteBatch, viewport, 3, $"Ingreso/turno: ${city.IncomePerTurn}", incomeColor);
 
         if (city.Result is { } result)
         {
@@ -75,12 +107,28 @@ public sealed class GameHud : IDisposable
             return;
         }
 
+        foreach (var building in BuildingOptions)
+        {
+            DrawButton(spriteBatch, GetBuildingButtonBounds(viewport, building), BuildingCatalog.Get(building).Name,
+                building == selectedBuilding, textColor);
+        }
+
         var buttonText = city.Turn == CityState.MaxTurns ? "Finalizar partida" : "Siguiente turno";
         DrawButton(spriteBatch, GetNextTurnButtonBounds(viewport), buttonText, actionHovered, textColor);
 
         if (viewport.Height >= panelHeight + 40)
         {
-            var hint = message ?? "Clic izquierdo: construir | Esc: salir";
+            var details = $"{definition.Name}: ${definition.Cost}";
+            if (definition.PopulationBenefit > 0)
+            {
+                details += $" | +{definition.PopulationBenefit} hab.";
+            }
+            details += $" | +${definition.IncomePerTurn}/turno";
+            if (definition.MinimumPopulation > 0)
+            {
+                details += $" | Población > {definition.MinimumPopulation - 1}";
+            }
+            var hint = message ?? details;
             var hintColor = message is null ? new Color(157, 175, 191) : new Color(250, 142, 132);
             DrawLabel(spriteBatch, hint, new Vector2(viewport.X + Padding, viewport.Bottom - 28),
                 availableWidth, hintColor, 0.85f);

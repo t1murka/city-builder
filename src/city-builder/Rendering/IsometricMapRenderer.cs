@@ -14,6 +14,7 @@ public sealed class IsometricMapRenderer : IDisposable
     private const int MapPadding = 48;
 
     private static readonly Rectangle HouseSource = new(80, 398, 34, 27);
+    private static readonly Rectangle ShopSource = new(265, 374, 34, 23);
 
     private readonly Texture2D _grassTexture;
     private readonly Texture2D _buildingsTexture;
@@ -63,7 +64,8 @@ public sealed class IsometricMapRenderer : IDisposable
         return map.Contains(cell);
     }
 
-    public void Draw(SpriteBatch spriteBatch, CityMap map, CellPosition? hoveredCell, bool canBuild)
+    public void Draw(SpriteBatch spriteBatch, CityMap map, CellPosition? hoveredCell,
+        BuildingType selectedBuilding, bool canBuild)
     {
         for (var x = 0; x < map.Width; x++)
         {
@@ -96,7 +98,7 @@ public sealed class IsometricMapRenderer : IDisposable
             DrawOutline(spriteBatch, selectedCell, color, 2f);
         }
 
-        DrawBuildings(spriteBatch, map, hoveredCell, canBuild);
+        DrawBuildings(spriteBatch, map, hoveredCell, selectedBuilding, canBuild);
     }
 
     public void Dispose()
@@ -106,7 +108,8 @@ public sealed class IsometricMapRenderer : IDisposable
         _pixelTexture.Dispose();
     }
 
-    private void DrawBuildings(SpriteBatch spriteBatch, CityMap map, CellPosition? hoveredCell, bool canBuild)
+    private void DrawBuildings(SpriteBatch spriteBatch, CityMap map, CellPosition? hoveredCell,
+        BuildingType selectedBuilding, bool canBuild)
     {
         // Diagonal traversal draws both buildings and the preview from back to front.
         for (var depth = 0; depth < map.Width + map.Height - 1; depth++)
@@ -125,7 +128,7 @@ public sealed class IsometricMapRenderer : IDisposable
                 if (hoveredCell == cell)
                 {
                     var color = canBuild ? new Color(150, 255, 180) : new Color(255, 100, 100);
-                    DrawBuilding(spriteBatch, BuildingType.House, cell, color * 0.65f);
+                    DrawBuilding(spriteBatch, selectedBuilding, cell, color * 0.65f);
                 }
             }
         }
@@ -136,6 +139,7 @@ public sealed class IsometricMapRenderer : IDisposable
         var source = building switch
         {
             BuildingType.House => HouseSource,
+            BuildingType.Shop => ShopSource,
             _ => throw new InvalidOperationException("Unsupported building type.")
         };
 

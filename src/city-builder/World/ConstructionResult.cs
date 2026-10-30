@@ -6,5 +6,6 @@ public enum ConstructionResult
     OutsideMap,
     Occupied,
     InsufficientFunds,
-    SessionFinished
+    SessionFinished,
+    InsufficientPopulation
 }

@@ -3,6 +3,8 @@
 ## Sin publicar
 
 ### Agregado
+- Tienda de $250 con ingresos de $50 por turno y requisito de población mayor que 10.
+- Selector compacto de casas y tiendas, detalles de construcción y vista previa del edificio elegido.
 - Partidas de 20 turnos con cobro del último turno y bloqueo de acciones al finalizar.
 - Pantalla de resultados con población, dinero y puntaje (población × 100 + dinero).
 - Botón para iniciar una nueva partida con el mapa y los recursos reiniciados.
