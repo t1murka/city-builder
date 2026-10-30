@@ -3,10 +3,12 @@
 ## Sin publicar
 
 ### Agregado
+- Parques de $300 con mantenimiento de $10 por turno y una mejora de 10 puntos de satisfacción.
+- Satisfacción inicial de 50%, limitada al rango de 0 a 100%, visible durante la partida y en el resultado.
 - Tienda de $250 con ingresos de $50 por turno y requisito de población mayor que 10.
 - Selector compacto de casas y tiendas, detalles de construcción y vista previa del edificio elegido.
 - Partidas de 20 turnos con cobro del último turno y bloqueo de acciones al finalizar.
-- Pantalla de resultados con población, dinero y puntaje (población × 100 + dinero).
+- Pantalla de resultados con población, dinero, satisfacción y puntaje ((población × 100 + dinero) × satisfacción / 100).
 - Botón para iniciar una nueva partida con el mapa y los recursos reiniciados.
 - Turnos con ingresos de $10 por casa y botón para avanzar al siguiente turno.
 - Indicadores de turno actual e ingresos por turno en el panel de recursos.
@@ -19,6 +21,7 @@
 - Instrucciones de ejecución.
 
 ### Modificado
+- El balance por turno incluye ingresos y gastos; los valores negativos se muestran en rojo.
 - Versiones de MonoGame y herramientas fijadas a 3.8.4.1 para obtener compilaciones consistentes.
 - Uso del tile de césped existente con una huella isométrica de 64×32.
 

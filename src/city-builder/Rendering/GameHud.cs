@@ -12,13 +12,13 @@ public sealed class GameHud : IDisposable
     private const int RowHeight = 36;
     private const int ControlHeight = 32;
     private const int NextTurnCellIndex = 5;
-    private const int BuildingCellIndex = 4;
     private const int CompactWidth = 600;
     private const int ResultPanelWidth = 420;
-    private const int ResultPanelHeight = 260;
+    private const int ResultPanelHeight = 300;
     private readonly SpriteFont _font;
     private readonly Texture2D _pixel;
-    private static readonly BuildingType[] BuildingOptions = { BuildingType.House, BuildingType.Shop };
+    private static readonly BuildingType[] BuildingOptions =
+        { BuildingType.House, BuildingType.Shop, BuildingType.Park };
 
     public GameHud(GraphicsDevice graphicsDevice, SpriteFont font)
     {
@@ -48,7 +48,7 @@ public sealed class GameHud : IDisposable
         var panel = GetResultPanelBounds(viewport);
         var scale = panel.Width / (float)ResultPanelWidth;
         var width = (int)(180 * scale);
-        return new Rectangle(panel.Center.X - width / 2, panel.Y + (int)(200 * scale),
+        return new Rectangle(panel.Center.X - width / 2, panel.Y + (int)(236 * scale),
             width, (int)(36 * scale));
     }
 
@@ -60,12 +60,11 @@ public sealed class GameHud : IDisposable
             throw new ArgumentOutOfRangeException(nameof(building));
         }
 
-        var columns = GetColumnCount(viewport.Width);
-        var columnWidth = GetColumnWidth(viewport.Width);
-        var width = Math.Max(1, ((int)columnWidth - 14) / BuildingOptions.Length);
+        var availableWidth = viewport.Width - Padding * 2 - 8 * (BuildingOptions.Length - 1);
+        var width = Math.Max(1, Math.Min(160, availableWidth / BuildingOptions.Length));
         var bounds = new Rectangle(
-            viewport.X + Padding + (int)(BuildingCellIndex % columns * columnWidth) + index * (width + 6),
-            viewport.Y + VerticalPadding + BuildingCellIndex / columns * RowHeight, width, ControlHeight);
+            viewport.X + Padding + index * (width + 8),
+            viewport.Y + VerticalPadding + GetBuildingRow(viewport.Width) * RowHeight, width, ControlHeight);
         return viewport.Contains(bounds) ? bounds : Rectangle.Empty;
     }
 
@@ -94,12 +93,14 @@ public sealed class GameHud : IDisposable
         var availableWidth = Math.Max(1, viewport.Width - Padding * 2);
         var definition = BuildingCatalog.Get(selectedBuilding);
         var textColor = new Color(230, 236, 242);
-        var incomeColor = new Color(154, 218, 173);
+        var incomeColor = city.IncomePerTurn >= 0 ? new Color(154, 218, 173) : new Color(250, 142, 132);
 
-        DrawCell(spriteBatch, viewport, 0, $"Dinero: ${city.Money}", textColor);
+        var moneyColor = city.Money < 0 ? new Color(250, 142, 132) : textColor;
+        DrawCell(spriteBatch, viewport, 0, $"Dinero: {FormatMoney(city.Money)}", moneyColor);
         DrawCell(spriteBatch, viewport, 1, $"Población: {city.Population}", textColor);
-        DrawCell(spriteBatch, viewport, 2, $"Turno: {city.Turn}/{CityState.MaxTurns}", textColor);
-        DrawCell(spriteBatch, viewport, 3, $"Ingreso/turno: ${city.IncomePerTurn}", incomeColor);
+        DrawCell(spriteBatch, viewport, 2, $"Satisfacción: {city.Satisfaction}%", textColor);
+        DrawCell(spriteBatch, viewport, 3, $"Turno: {city.Turn}/{CityState.MaxTurns}", textColor);
+        DrawCell(spriteBatch, viewport, 4, $"Balance/turno: {FormatMoneyChange(city.IncomePerTurn)}", incomeColor);
 
         if (city.Result is { } result)
         {
@@ -123,7 +124,11 @@ public sealed class GameHud : IDisposable
             {
                 details += $" | +{definition.PopulationBenefit} hab.";
             }
-            details += $" | +${definition.IncomePerTurn}/turno";
+            details += $" | {FormatMoneyChange(definition.IncomePerTurn)}/turno";
+            if (definition.SatisfactionBenefit > 0)
+            {
+                details += $" | +{definition.SatisfactionBenefit} satisfacción";
+            }
             if (definition.MinimumPopulation > 0)
             {
                 details += $" | Población > {definition.MinimumPopulation - 1}";
@@ -142,8 +147,14 @@ public sealed class GameHud : IDisposable
     private static float GetColumnWidth(int width) =>
         Math.Max(1, width - Padding * 2) / (float)GetColumnCount(width);
 
-    private static int GetPanelHeight(int width) =>
-        VerticalPadding * 2 + (NextTurnCellIndex / GetColumnCount(width) + 1) * RowHeight;
+    private static int GetBuildingRow(int width) => NextTurnCellIndex / GetColumnCount(width) + 1;
+
+    private static int GetPanelHeight(int width) => VerticalPadding * 2 + (GetBuildingRow(width) + 1) * RowHeight;
+
+    private static string FormatMoney(int amount) => amount >= 0 ? $"${amount}" : $"-${-(long)amount}";
+
+    private static string FormatMoneyChange(int amount) =>
+        amount >= 0 ? $"+{FormatMoney(amount)}" : FormatMoney(amount);
 
     private static Rectangle GetResultPanelBounds(Rectangle viewport)
     {
@@ -164,8 +175,9 @@ public sealed class GameHud : IDisposable
 
         DrawResultLabel(spriteBatch, panel, "Fin de partida", 22, textColor, 1.3f);
         DrawResultLabel(spriteBatch, panel, $"Población: {result.Population}", 76, textColor);
-        DrawResultLabel(spriteBatch, panel, $"Dinero: ${result.Money}", 112, textColor);
-        DrawResultLabel(spriteBatch, panel, $"Puntaje: {result.Score}", 148, new Color(154, 218, 173));
+        DrawResultLabel(spriteBatch, panel, $"Dinero: {FormatMoney(result.Money)}", 112, textColor);
+        DrawResultLabel(spriteBatch, panel, $"Satisfacción: {result.Satisfaction}%", 148, textColor);
+        DrawResultLabel(spriteBatch, panel, $"Puntaje: {result.Score}", 184, new Color(154, 218, 173));
         DrawButton(spriteBatch, GetNewGameButtonBounds(viewport), "Nueva partida", buttonHovered,
             textColor, 0.9f * scale);
     }

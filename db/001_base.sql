@@ -8,6 +8,7 @@ CREATE TABLE building_types (
     costo INT NOT NULL CHECK (costo >= 0),
     beneficio_poblacion INT NOT NULL,
     beneficio_dinero INT NOT NULL,
+    beneficio_satisfaccion INT NOT NULL DEFAULT 0 CHECK (beneficio_satisfaccion BETWEEN -100 AND 100),
     requisitos VARCHAR(255)
 );
 

@@ -18,6 +18,7 @@ public sealed class IsometricMapRenderer : IDisposable
 
     private readonly Texture2D _grassTexture;
     private readonly Texture2D _buildingsTexture;
+    private readonly Texture2D _parkTexture;
     private readonly Texture2D _diamondTexture;
     private readonly Texture2D _pixelTexture;
     private IsometricProjection _projection = new(BaseTileWidth, BaseTileHeight, NumericsVector2.Zero);
@@ -25,10 +26,12 @@ public sealed class IsometricMapRenderer : IDisposable
     private int _mapWidth;
     private int _mapHeight;
 
-    public IsometricMapRenderer(GraphicsDevice graphicsDevice, Texture2D grassTexture, Texture2D buildingsTexture)
+    public IsometricMapRenderer(GraphicsDevice graphicsDevice, Texture2D grassTexture,
+        Texture2D buildingsTexture, Texture2D parkTexture)
     {
         _grassTexture = grassTexture;
         _buildingsTexture = buildingsTexture;
+        _parkTexture = parkTexture;
         _diamondTexture = CreateDiamondTexture(graphicsDevice);
         _pixelTexture = new Texture2D(graphicsDevice, 1, 1);
         _pixelTexture.SetData(new[] { Color.White });
@@ -140,6 +143,7 @@ public sealed class IsometricMapRenderer : IDisposable
         {
             BuildingType.House => HouseSource,
             BuildingType.Shop => ShopSource,
+            BuildingType.Park => _parkTexture.Bounds,
             _ => throw new InvalidOperationException("Unsupported building type.")
         };
 
@@ -148,7 +152,8 @@ public sealed class IsometricMapRenderer : IDisposable
         var origin = new Vector2(source.Width / 2f, source.Height);
         var scale = _projection.TileWidth / source.Width;
 
-        spriteBatch.Draw(_buildingsTexture, bottom, source, color, 0f, origin, scale, SpriteEffects.None, 0f);
+        var texture = building == BuildingType.Park ? _parkTexture : _buildingsTexture;
+        spriteBatch.Draw(texture, bottom, source, color, 0f, origin, scale, SpriteEffects.None, 0f);
     }
 
     private void DrawTile(SpriteBatch spriteBatch, Texture2D texture, CellPosition cell, Color color)

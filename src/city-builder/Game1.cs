@@ -43,7 +43,8 @@ public sealed class Game1 : Game
         _spriteBatch = new SpriteBatch(GraphicsDevice);
         var grassTexture = Content.Load<Texture2D>("Textures/Tiles/pasto");
         var buildingsTexture = Content.Load<Texture2D>("Textures/Buildings/pixel-city");
-        _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture, buildingsTexture);
+        var parkTexture = Content.Load<Texture2D>("Textures/Buildings/park");
+        _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture, buildingsTexture, parkTexture);
         _hud = new GameHud(GraphicsDevice, Content.Load<SpriteFont>("Fonts/Ui"));
         _previousMouse = Mouse.GetState();
     }

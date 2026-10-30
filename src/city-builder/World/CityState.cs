@@ -11,6 +11,7 @@ public sealed class CityState
     public int Population { get; private set; }
     public int Turn { get; private set; } = 1;
     public int IncomePerTurn { get; private set; }
+    public int Satisfaction { get; private set; } = 50;
     public CityResult? Result { get; private set; }
     public bool IsFinished => Result is not null;
 
@@ -67,6 +68,7 @@ public sealed class CityState
         Money -= definition.Cost;
         Population += definition.PopulationBenefit;
         IncomePerTurn += definition.IncomePerTurn;
+        Satisfaction = Math.Clamp(Satisfaction + definition.SatisfactionBenefit, 0, 100);
         return ConstructionResult.Success;
     }
 
@@ -80,7 +82,7 @@ public sealed class CityState
         Money = checked(Money + IncomePerTurn);
         if (Turn == MaxTurns)
         {
-            Result = new CityResult(Population, Money);
+            Result = new CityResult(Population, Money, Satisfaction);
         }
         else
         {
