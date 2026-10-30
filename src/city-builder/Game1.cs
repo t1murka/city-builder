@@ -9,15 +9,17 @@ namespace city_builder;
 
 public sealed class Game1 : Game
 {
+    private const int MapWidth = 10;
+    private const int MapHeight = 10;
     private readonly GraphicsDeviceManager _graphics;
-    private readonly CityState _city = new(10, 10);
+    private CityState _city = new(MapWidth, MapHeight);
     private SpriteBatch _spriteBatch = null!;
     private IsometricMapRenderer _mapRenderer = null!;
-    private ResourceHud _hud = null!;
+    private GameHud _hud = null!;
     private CellPosition? _hoveredCell;
     private MouseState _previousMouse;
     private bool _wasActive;
-    private bool _nextTurnHovered;
+    private bool _actionHovered;
     private string? _message;
     private double _messageSeconds;
 
@@ -41,7 +43,7 @@ public sealed class Game1 : Game
         var grassTexture = Content.Load<Texture2D>("Textures/Tiles/pasto");
         var buildingsTexture = Content.Load<Texture2D>("Textures/Buildings/pixel-city");
         _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture, buildingsTexture);
-        _hud = new ResourceHud(GraphicsDevice, Content.Load<SpriteFont>("Fonts/Ui"));
+        _hud = new GameHud(GraphicsDevice, Content.Load<SpriteFont>("Fonts/Ui"));
         _previousMouse = Mouse.GetState();
     }
 
@@ -63,10 +65,12 @@ public sealed class Game1 : Game
         _mapRenderer.UpdateLayout(_city.Map, mapBounds);
 
         var mouse = Mouse.GetState();
-        _nextTurnHovered = IsActive
-            && _hud.GetNextTurnButtonBounds(GraphicsDevice.Viewport.Bounds).Contains(mouse.Position);
+        var actionBounds = _city.IsFinished
+            ? _hud.GetNewGameButtonBounds(GraphicsDevice.Viewport.Bounds)
+            : _hud.GetNextTurnButtonBounds(GraphicsDevice.Viewport.Bounds);
+        _actionHovered = IsActive && actionBounds.Contains(mouse.Position);
         var mousePosition = new System.Numerics.Vector2(mouse.X, mouse.Y);
-        _hoveredCell = IsActive && mapBounds.Contains(mouse.X, mouse.Y)
+        _hoveredCell = IsActive && !_city.IsFinished && mapBounds.Contains(mouse.X, mouse.Y)
             && _mapRenderer.TryGetCell(_city.Map, mousePosition, out var cell)
                 ? cell
                 : null;
@@ -75,11 +79,22 @@ public sealed class Game1 : Game
             && _previousMouse.LeftButton == ButtonState.Released;
         if (IsActive && _wasActive && leftClick)
         {
-            if (_nextTurnHovered)
+            if (_city.IsFinished)
+            {
+                if (_actionHovered)
+                {
+                    StartNewGame();
+                }
+            }
+            else if (_actionHovered)
             {
                 _city.AdvanceTurn();
                 _message = null;
                 _messageSeconds = 0;
+                if (_city.IsFinished)
+                {
+                    _actionHovered = false;
+                }
             }
             else if (_hoveredCell is { } selectedCell)
             {
@@ -112,10 +127,19 @@ public sealed class Game1 : Game
         _spriteBatch.End();
 
         _spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
-        _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _message, _nextTurnHovered);
+        _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _message, _actionHovered);
         _spriteBatch.End();
 
         base.Draw(gameTime);
+    }
+
+    private void StartNewGame()
+    {
+        _city = new CityState(MapWidth, MapHeight);
+        _hoveredCell = null;
+        _actionHovered = false;
+        _message = null;
+        _messageSeconds = 0;
     }
 
     protected override void UnloadContent()

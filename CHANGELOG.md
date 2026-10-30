@@ -3,6 +3,9 @@
 ## Sin publicar
 
 ### Agregado
+- Partidas de 20 turnos con cobro del último turno y bloqueo de acciones al finalizar.
+- Pantalla de resultados con población, dinero y puntaje (población × 100 + dinero).
+- Botón para iniciar una nueva partida con el mapa y los recursos reiniciados.
 - Turnos con ingresos de $10 por casa y botón para avanzar al siguiente turno.
 - Indicadores de turno actual e ingresos por turno en el panel de recursos.
 - Dinero inicial, costo de construcción y crecimiento de población por casa.

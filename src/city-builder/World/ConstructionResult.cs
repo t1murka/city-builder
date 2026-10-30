@@ -5,5 +5,6 @@ public enum ConstructionResult
     Success,
     OutsideMap,
     Occupied,
-    InsufficientFunds
+    InsufficientFunds,
+    SessionFinished
 }
