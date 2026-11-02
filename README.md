@@ -16,4 +16,4 @@ dotnet run --project src/city-builder/city-builder.csproj
 2. Copia `database.example.json` a `database.json` junto al ejecutable, o en `src/city-builder/` si ejecutas desde el código fuente.
 3. Configura servidor, puerto, usuario, contraseña y `PlayerName`. La base es `city_builder_mini`.
 
-Sin `database.json`, el guardado de resultados está desactivado.
+Sin `database.json`, el guardado en MySQL está desactivado.

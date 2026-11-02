@@ -48,6 +48,52 @@ public sealed class MySqlSessionRepository(string connectionString)
         return sessionId;
     }
 
+    public async Task SaveConstructionAsync(long sessionId, CellPosition position, BuildingType building,
+        CancellationToken cancellationToken)
+    {
+        var buildingName = building switch
+        {
+            BuildingType.House => "Casa de Madera",
+            BuildingType.Shop => "Tienda Local",
+            BuildingType.Park => "Parque Central",
+            _ => throw new ArgumentOutOfRangeException(nameof(building))
+        };
+
+        await using var connection = new MySqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        using var buildingSelect = new MySqlCommand("SELECT id FROM building_types WHERE nombre = @name;",
+            connection, transaction);
+        buildingSelect.Parameters.AddWithValue("@name", buildingName);
+        var buildingId = Convert.ToInt64(await buildingSelect.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false));
+        if (buildingId <= 0)
+        {
+            throw new InvalidOperationException("The building type does not exist in the database.");
+        }
+
+        using var mapInsert = new MySqlCommand("""
+            INSERT INTO map_grid (session_id, x, y, building_id)
+            VALUES (@session, @x, @y, @building);
+            """, connection, transaction);
+        mapInsert.Parameters.AddWithValue("@session", sessionId);
+        mapInsert.Parameters.AddWithValue("@x", position.X);
+        mapInsert.Parameters.AddWithValue("@y", position.Y);
+        mapInsert.Parameters.AddWithValue("@building", buildingId);
+        await mapInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        using var logInsert = new MySqlCommand("""
+            INSERT INTO construction_logs (session_id, x, y, building_id)
+            VALUES (@session, @x, @y, @building);
+            """, connection, transaction);
+        logInsert.Parameters.AddWithValue("@session", sessionId);
+        logInsert.Parameters.AddWithValue("@x", position.X);
+        logInsert.Parameters.AddWithValue("@y", position.Y);
+        logInsert.Parameters.AddWithValue("@building", buildingId);
+        await logInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task SaveResultAsync(long sessionId, DateTime endedAtUtc, CityResult result,
         CancellationToken cancellationToken)
     {

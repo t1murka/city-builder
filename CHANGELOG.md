@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Agregado
+- Registro de construcciones exitosas en el mapa y el historial de la partida en MySQL.
 - Conexión configurable a MySQL y registro de jugadores, partidas y resultados finales.
 - Guardado asíncrono de resultados con transacción e indicadores de estado.
 - Archivo de ejemplo para configurar la conexión y el nombre del jugador.
