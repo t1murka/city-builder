@@ -199,9 +199,9 @@ public sealed class GameHud : IDisposable
         DatabaseStatus.Connecting => "Conectando a MySQL...",
         DatabaseStatus.Ready => "Partida registrada",
         DatabaseStatus.Unavailable => "Sin conexión a MySQL",
-        DatabaseStatus.Saving => "Guardando resultado...",
+        DatabaseStatus.Saving => "Guardando partida...",
         DatabaseStatus.Saved => "Resultado guardado",
-        DatabaseStatus.Failed => "No se pudo guardar el resultado",
+        DatabaseStatus.Failed => "No se pudo guardar la partida",
         _ => throw new ArgumentOutOfRangeException(nameof(status))
     };
 

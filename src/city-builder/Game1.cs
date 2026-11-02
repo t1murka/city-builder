@@ -113,6 +113,11 @@ public sealed class Game1 : Game
             else if (_hoveredCell is { } selectedCell)
             {
                 var result = _city.TryConstruct(selectedCell, _selectedBuilding);
+                if (result == ConstructionResult.Success)
+                {
+                    _persistence.RecordConstruction(selectedCell, _selectedBuilding);
+                }
+
                 _message = result switch
                 {
                     ConstructionResult.InsufficientFunds => "Dinero insuficiente",
