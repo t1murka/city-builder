@@ -1,4 +1,5 @@
 using System;
+using city_builder.Persistence;
 using city_builder.World;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -84,7 +85,7 @@ public sealed class GameHud : IDisposable
     }
 
     public void Draw(SpriteBatch spriteBatch, Rectangle viewport, CityState city, BuildingType selectedBuilding,
-        string? message, bool actionHovered)
+        string? message, bool actionHovered, DatabaseStatus databaseStatus)
     {
         var panelHeight = GetPanelHeight(viewport.Width);
         var panel = new Rectangle(viewport.X, viewport.Y, viewport.Width, Math.Min(panelHeight, viewport.Height));
@@ -104,7 +105,7 @@ public sealed class GameHud : IDisposable
 
         if (city.Result is { } result)
         {
-            DrawResult(spriteBatch, viewport, result, actionHovered, textColor);
+            DrawResult(spriteBatch, viewport, result, actionHovered, textColor, databaseStatus);
             return;
         }
 
@@ -138,6 +139,13 @@ public sealed class GameHud : IDisposable
             DrawLabel(spriteBatch, hint, new Vector2(viewport.X + Padding, viewport.Bottom - 28),
                 availableWidth, hintColor, 0.85f);
         }
+
+        if (viewport.Height >= panelHeight + 64)
+        {
+            DrawLabel(spriteBatch, GetDatabaseStatusText(databaseStatus),
+                new Vector2(viewport.X + Padding, viewport.Bottom - 50), availableWidth,
+                GetDatabaseStatusColor(databaseStatus), 0.75f);
+        }
     }
 
     public void Dispose() => _pixel.Dispose();
@@ -166,7 +174,7 @@ public sealed class GameHud : IDisposable
     }
 
     private void DrawResult(SpriteBatch spriteBatch, Rectangle viewport, CityResult result,
-        bool buttonHovered, Color textColor)
+        bool buttonHovered, Color textColor, DatabaseStatus databaseStatus)
     {
         var panel = GetResultPanelBounds(viewport);
         var scale = panel.Width / (float)ResultPanelWidth;
@@ -178,9 +186,32 @@ public sealed class GameHud : IDisposable
         DrawResultLabel(spriteBatch, panel, $"Dinero: {FormatMoney(result.Money)}", 112, textColor);
         DrawResultLabel(spriteBatch, panel, $"Satisfacción: {result.Satisfaction}%", 148, textColor);
         DrawResultLabel(spriteBatch, panel, $"Puntaje: {result.Score}", 184, new Color(154, 218, 173));
+        DrawResultLabel(spriteBatch, panel, GetDatabaseStatusText(databaseStatus), 216,
+            GetDatabaseStatusColor(databaseStatus), 0.7f);
         DrawButton(spriteBatch, GetNewGameButtonBounds(viewport), "Nueva partida", buttonHovered,
             textColor, 0.9f * scale);
     }
+
+    private static string GetDatabaseStatusText(DatabaseStatus status) => status switch
+    {
+        DatabaseStatus.Disabled => "Guardado desactivado",
+        DatabaseStatus.InvalidConfiguration => "Configuración de MySQL inválida",
+        DatabaseStatus.Connecting => "Conectando a MySQL...",
+        DatabaseStatus.Ready => "Partida registrada",
+        DatabaseStatus.Unavailable => "Sin conexión a MySQL",
+        DatabaseStatus.Saving => "Guardando resultado...",
+        DatabaseStatus.Saved => "Resultado guardado",
+        DatabaseStatus.Failed => "No se pudo guardar el resultado",
+        _ => throw new ArgumentOutOfRangeException(nameof(status))
+    };
+
+    private static Color GetDatabaseStatusColor(DatabaseStatus status) => status switch
+    {
+        DatabaseStatus.InvalidConfiguration or DatabaseStatus.Unavailable or DatabaseStatus.Failed =>
+            new Color(250, 142, 132),
+        DatabaseStatus.Saved => new Color(154, 218, 173),
+        _ => new Color(157, 175, 191)
+    };
 
     private void DrawResultLabel(SpriteBatch spriteBatch, Rectangle panel, string text, float y,
         Color color, float preferredScale = 1f)

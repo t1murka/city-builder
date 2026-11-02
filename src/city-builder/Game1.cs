@@ -1,4 +1,6 @@
 using System;
+using System.IO;
+using city_builder.Persistence;
 using city_builder.Rendering;
 using city_builder.World;
 using Microsoft.Xna.Framework;
@@ -12,6 +14,8 @@ public sealed class Game1 : Game
     private const int MapWidth = 10;
     private const int MapHeight = 10;
     private readonly GraphicsDeviceManager _graphics;
+    private readonly SessionPersistence _persistence =
+        SessionPersistence.FromFile(Path.Combine(AppContext.BaseDirectory, "database.json"));
     private CityState _city = new(MapWidth, MapHeight);
     private SpriteBatch _spriteBatch = null!;
     private IsometricMapRenderer _mapRenderer = null!;
@@ -47,6 +51,7 @@ public sealed class Game1 : Game
         _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture, buildingsTexture, parkTexture);
         _hud = new GameHud(GraphicsDevice, Content.Load<SpriteFont>("Fonts/Ui"));
         _previousMouse = Mouse.GetState();
+        _persistence.StartNewSession();
     }
 
     protected override void Update(GameTime gameTime)
@@ -102,6 +107,7 @@ public sealed class Game1 : Game
                 if (_city.IsFinished)
                 {
                     _actionHovered = false;
+                    _persistence.FinishSession(_city.Result!);
                 }
             }
             else if (_hoveredCell is { } selectedCell)
@@ -137,7 +143,8 @@ public sealed class Game1 : Game
         _spriteBatch.End();
 
         _spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
-        _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _selectedBuilding, _message, _actionHovered);
+        _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _selectedBuilding, _message,
+            _actionHovered, _persistence.Status);
         _spriteBatch.End();
 
         base.Draw(gameTime);
@@ -151,7 +158,10 @@ public sealed class Game1 : Game
         _actionHovered = false;
         _message = null;
         _messageSeconds = 0;
+        _persistence.StartNewSession();
     }
+
+    public void WaitForPendingSaves() => _persistence.WaitForPendingSaves();
 
     protected override void UnloadContent()
     {

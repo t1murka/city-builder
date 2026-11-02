@@ -3,6 +3,9 @@
 ## Sin publicar
 
 ### Agregado
+- Conexión configurable a MySQL y registro de jugadores, partidas y resultados finales.
+- Guardado asíncrono de resultados con transacción e indicadores de estado.
+- Archivo de ejemplo para configurar la conexión y el nombre del jugador.
 - Parques de $300 con mantenimiento de $10 por turno y una mejora de 10 puntos de satisfacción.
 - Satisfacción inicial de 50%, limitada al rango de 0 a 100%, visible durante la partida y en el resultado.
 - Tienda de $250 con ingresos de $50 por turno y requisito de población mayor que 10.
@@ -21,6 +24,7 @@
 - Instrucciones de ejecución.
 
 ### Modificado
+- El script base de la base de datos conserva las tablas y los datos existentes.
 - El balance por turno incluye ingresos y gastos; los valores negativos se muestran en rojo.
 - Versiones de MonoGame y herramientas fijadas a 3.8.4.1 para obtener compilaciones consistentes.
 - Uso del tile de césped existente con una huella isométrica de 64×32.

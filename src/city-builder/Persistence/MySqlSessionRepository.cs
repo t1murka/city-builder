@@ -1,0 +1,84 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using city_builder.World;
+using MySqlConnector;
+
+namespace city_builder.Persistence;
+
+public sealed class MySqlSessionRepository(string connectionString)
+{
+    public async Task<long> StartSessionAsync(string playerName, DateTime startedAtUtc,
+        CancellationToken cancellationToken)
+    {
+        await using var connection = new MySqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        using var playerSelect = new MySqlCommand("SELECT id FROM players WHERE username = @name;", connection);
+        playerSelect.Parameters.AddWithValue("@name", playerName);
+        var playerId = Convert.ToInt64(await playerSelect.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false));
+        if (playerId == 0)
+        {
+            using var playerInsert = new MySqlCommand("INSERT INTO players (username) VALUES (@name);", connection);
+            playerInsert.Parameters.AddWithValue("@name", playerName);
+            try
+            {
+                await playerInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+                playerId = playerInsert.LastInsertedId;
+            }
+            catch (MySqlException exception) when (exception.Number == 1062)
+            {
+                // Another game may have created this player after the SELECT.
+                playerId = Convert.ToInt64(await playerSelect.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false));
+            }
+        }
+
+        using var sessionInsert = new MySqlCommand("""
+            INSERT INTO sessions (player_id, inicio) VALUES (@player, @started);
+            """, connection);
+        sessionInsert.Parameters.AddWithValue("@player", playerId);
+        sessionInsert.Parameters.AddWithValue("@started", startedAtUtc);
+        await sessionInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        var sessionId = sessionInsert.LastInsertedId;
+        if (playerId <= 0 || sessionId <= 0)
+        {
+            throw new InvalidOperationException("Session registration did not return valid identifiers.");
+        }
+
+        return sessionId;
+    }
+
+    public async Task SaveResultAsync(long sessionId, DateTime endedAtUtc, CityResult result,
+        CancellationToken cancellationToken)
+    {
+        await using var connection = new MySqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+
+        using var sessionUpdate = new MySqlCommand("""
+            UPDATE sessions
+            SET fin = @ended, poblacion_final = @population, dinero_final = @money
+            WHERE id = @session;
+            """, connection, transaction);
+        sessionUpdate.Parameters.AddWithValue("@ended", endedAtUtc);
+        sessionUpdate.Parameters.AddWithValue("@population", result.Population);
+        sessionUpdate.Parameters.AddWithValue("@money", result.Money);
+        sessionUpdate.Parameters.AddWithValue("@session", sessionId);
+        if (await sessionUpdate.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+        {
+            throw new InvalidOperationException("The session to complete does not exist.");
+        }
+
+        using var resultInsert = new MySqlCommand("""
+            INSERT INTO session_results (session_id, poblacion, dinero, satisfaccion, puntaje)
+            VALUES (@session, @population, @money, @satisfaction, @score);
+            """, connection, transaction);
+        resultInsert.Parameters.AddWithValue("@session", sessionId);
+        resultInsert.Parameters.AddWithValue("@population", result.Population);
+        resultInsert.Parameters.AddWithValue("@money", result.Money);
+        resultInsert.Parameters.AddWithValue("@satisfaction", result.Satisfaction);
+        resultInsert.Parameters.AddWithValue("@score", result.Score);
+        await resultInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+}
