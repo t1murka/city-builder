@@ -1,23 +1,23 @@
-DROP DATABASE IF EXISTS city_builder_mini;
-CREATE DATABASE city_builder_mini;
+CREATE DATABASE IF NOT EXISTS city_builder_mini;
 USE city_builder_mini;
 
-CREATE TABLE building_types (
+CREATE TABLE IF NOT EXISTS building_types (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(50) NOT NULL UNIQUE,
     costo INT NOT NULL CHECK (costo >= 0),
     beneficio_poblacion INT NOT NULL,
     beneficio_dinero INT NOT NULL,
+    beneficio_satisfaccion INT NOT NULL DEFAULT 0 CHECK (beneficio_satisfaccion BETWEEN -100 AND 100),
     requisitos VARCHAR(255)
 );
 
-CREATE TABLE players (
+CREATE TABLE IF NOT EXISTS players (
     id INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(50) NOT NULL UNIQUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE sessions (
+CREATE TABLE IF NOT EXISTS sessions (
     id INT AUTO_INCREMENT PRIMARY KEY,
     player_id INT NOT NULL,
     inicio DATETIME NOT NULL,
@@ -27,7 +27,7 @@ CREATE TABLE sessions (
     FOREIGN KEY (player_id) REFERENCES players(id) ON DELETE CASCADE
 );
 
-CREATE TABLE map_grid (
+CREATE TABLE IF NOT EXISTS map_grid (
     id INT AUTO_INCREMENT PRIMARY KEY,
     session_id INT NOT NULL,
     x INT NOT NULL,
@@ -38,7 +38,7 @@ CREATE TABLE map_grid (
     FOREIGN KEY (building_id) REFERENCES building_types(id) ON DELETE RESTRICT
 );
 
-CREATE TABLE construction_logs (
+CREATE TABLE IF NOT EXISTS construction_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     session_id INT NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -49,7 +49,7 @@ CREATE TABLE construction_logs (
     FOREIGN KEY (building_id) REFERENCES building_types(id) ON DELETE RESTRICT
 );
 
-CREATE TABLE resource_logs (
+CREATE TABLE IF NOT EXISTS resource_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     session_id INT NOT NULL,
     turno INT NOT NULL CHECK (turno >= 1),
@@ -61,13 +61,13 @@ CREATE TABLE resource_logs (
     FOREIGN KEY (session_id) REFERENCES sessions(id) ON DELETE CASCADE
 );
 
-CREATE TABLE events (
+CREATE TABLE IF NOT EXISTS events (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL UNIQUE,
     efecto VARCHAR(255) NOT NULL
 );
 
-CREATE TABLE event_logs (
+CREATE TABLE IF NOT EXISTS event_logs (
     id INT AUTO_INCREMENT PRIMARY KEY,
     session_id INT NOT NULL,
     turno INT NOT NULL,
@@ -76,7 +76,7 @@ CREATE TABLE event_logs (
     FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE RESTRICT
 );
 
-CREATE TABLE session_results (
+CREATE TABLE IF NOT EXISTS session_results (
     id INT AUTO_INCREMENT PRIMARY KEY,
     session_id INT NOT NULL UNIQUE,
     poblacion INT DEFAULT 0 CHECK (poblacion >= 0),

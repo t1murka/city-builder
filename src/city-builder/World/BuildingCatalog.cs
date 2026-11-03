@@ -6,7 +6,9 @@ public static class BuildingCatalog
 {
     public static BuildingDefinition Get(BuildingType type) => type switch
     {
-        BuildingType.House => new BuildingDefinition(100, 4, 10),
+        BuildingType.House => new BuildingDefinition("Casa", 100, 4, 10),
+        BuildingType.Shop => new BuildingDefinition("Tienda", 250, 0, 50, MinimumPopulation: 11),
+        BuildingType.Park => new BuildingDefinition("Parque", 300, 0, -10, SatisfactionBenefit: 10),
         _ => throw new ArgumentOutOfRangeException(nameof(type))
     };
 }
