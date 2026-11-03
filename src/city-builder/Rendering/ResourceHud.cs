@@ -62,7 +62,7 @@ public sealed class ResourceHud : IDisposable
 
         if (viewport.Height >= panelHeight + 40)
         {
-            var hint = message ?? "Clic izquierdo: construir | Esc: salir";
+            var hint = message ?? "Clic izquierdo: construir | Esc: menú";
             var hintColor = message is null ? new Color(157, 175, 191) : new Color(250, 142, 132);
             DrawLabel(spriteBatch, hint, new Vector2(viewport.X + Padding, viewport.Bottom - 28),
                 availableWidth, hintColor, 0.85f);
