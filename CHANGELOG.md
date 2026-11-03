@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Agregado
+- Menú principal para iniciar o continuar la partida y salir del juego; Esc vuelve al menú.
 - Registro de construcciones exitosas en el mapa y el historial de la partida en MySQL.
 - Conexión configurable a MySQL y registro de jugadores, partidas y resultados finales.
 - Guardado asíncrono de resultados con transacción e indicadores de estado.
@@ -31,4 +32,5 @@
 - Uso del tile de césped existente con una huella isométrica de 64×32.
 
 ### Corregido
+- Escalado proporcional del menú y sus botones al cambiar el tamaño de la ventana.
 - Formato ICO del icono de la aplicación, con tamaños de 16 a 256 píxeles.

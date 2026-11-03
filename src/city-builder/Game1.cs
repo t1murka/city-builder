@@ -27,6 +27,13 @@ public sealed class Game1 : Game
     private bool _actionHovered;
     private string? _message;
     private double _messageSeconds;
+    private GameState _state = GameState.Menu;
+    private bool _hasStarted;
+    private KeyboardState _previousKeyboard;
+    private ButtonState _previousBackButton;
+    private Texture2D _menuBackground = null!;
+    private Button _playButton = null!;
+    private Button _exitButton = null!;
 
     public Game1()
     {
@@ -51,15 +58,80 @@ public sealed class Game1 : Game
         _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture, buildingsTexture, parkTexture);
         _hud = new GameHud(GraphicsDevice, Content.Load<SpriteFont>("Fonts/Ui"));
         _previousMouse = Mouse.GetState();
-        _persistence.StartNewSession();
+        _previousKeyboard = Keyboard.GetState();
+        _previousBackButton = GamePad.GetState(PlayerIndex.One).Buttons.Back;
+        _menuBackground = Content.Load<Texture2D>("Textures/UI/menu_bg");
+        _playButton = new Button(Content.Load<Texture2D>("Textures/UI/btn_jugar"));
+        _exitButton = new Button(Content.Load<Texture2D>("Textures/UI/btn_salir"));
     }
 
     protected override void Update(GameTime gameTime)
     {
-        if (IsActive && (Keyboard.GetState().IsKeyDown(Keys.Escape)
-            || GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed))
+        var mouse = Mouse.GetState();
+        var keyboard = Keyboard.GetState();
+        var backButton = GamePad.GetState(PlayerIndex.One).Buttons.Back;
+        var backPressed = IsActive && (keyboard.IsKeyDown(Keys.Escape) && _previousKeyboard.IsKeyUp(Keys.Escape)
+            || backButton == ButtonState.Pressed && _previousBackButton == ButtonState.Released);
+        var leftClick = mouse.LeftButton == ButtonState.Pressed
+            && _previousMouse.LeftButton == ButtonState.Released;
+
+        switch (_state)
+        {
+            case GameState.Menu:
+                UpdateMenu(mouse, leftClick, backPressed);
+                break;
+            case GameState.Playing:
+                UpdatePlaying(gameTime, mouse, leftClick, backPressed);
+                break;
+        }
+
+        _previousMouse = mouse;
+        _previousKeyboard = keyboard;
+        _previousBackButton = backButton;
+        _wasActive = IsActive;
+        base.Update(gameTime);
+    }
+
+    private void UpdateMenu(MouseState mouse, bool leftClick, bool backPressed)
+    {
+        if (backPressed)
         {
             Exit();
+            return;
+        }
+
+        var bounds = GetMenuBounds();
+        var scale = bounds.Width / (float)_menuBackground.Width;
+        _playButton.SetLayout(new Point(bounds.Center.X, bounds.Center.Y + (int)(10 * scale)), scale);
+        _exitButton.SetLayout(new Point(bounds.Center.X, bounds.Center.Y + (int)(80 * scale)), scale);
+        _playButton.Update(mouse.Position, IsActive);
+        _exitButton.Update(mouse.Position, IsActive);
+
+        if (IsActive && _wasActive && leftClick)
+        {
+            if (_playButton.IsHovered)
+            {
+                if (!_hasStarted)
+                {
+                    StartNewGame();
+                }
+                _state = GameState.Playing;
+            }
+            else if (_exitButton.IsHovered)
+            {
+                Exit();
+            }
+        }
+    }
+
+    private void UpdatePlaying(GameTime gameTime, MouseState mouse, bool leftClick, bool backPressed)
+    {
+        if (backPressed)
+        {
+            _state = GameState.Menu;
+            _hoveredCell = null;
+            _actionHovered = false;
+            return;
         }
 
         _messageSeconds = Math.Max(0, _messageSeconds - gameTime.ElapsedGameTime.TotalSeconds);
@@ -71,7 +143,6 @@ public sealed class Game1 : Game
         var mapBounds = _hud.GetMapBounds(GraphicsDevice.Viewport.Bounds);
         _mapRenderer.UpdateLayout(_city.Map, mapBounds);
 
-        var mouse = Mouse.GetState();
         var actionBounds = _city.IsFinished
             ? _hud.GetNewGameButtonBounds(GraphicsDevice.Viewport.Bounds)
             : _hud.GetNextTurnButtonBounds(GraphicsDevice.Viewport.Bounds);
@@ -82,8 +153,6 @@ public sealed class Game1 : Game
                 ? cell
                 : null;
 
-        var leftClick = mouse.LeftButton == ButtonState.Pressed
-            && _previousMouse.LeftButton == ButtonState.Released;
         if (IsActive && _wasActive && leftClick)
         {
             if (_city.IsFinished)
@@ -129,16 +198,45 @@ public sealed class Game1 : Game
                 _messageSeconds = _message is null ? 0 : 2.5;
             }
         }
-
-        _previousMouse = mouse;
-        _wasActive = IsActive;
-
-        base.Update(gameTime);
     }
 
     protected override void Draw(GameTime gameTime)
     {
         GraphicsDevice.Clear(new Color(24, 32, 42));
+
+        if (_state == GameState.Menu)
+        {
+            DrawMenu();
+        }
+        else
+        {
+            DrawPlaying();
+        }
+
+        base.Draw(gameTime);
+    }
+
+    private Rectangle GetMenuBounds()
+    {
+        var viewport = GraphicsDevice.Viewport.Bounds;
+        var scale = Math.Min(viewport.Width / (float)_menuBackground.Width,
+            viewport.Height / (float)_menuBackground.Height);
+        var width = (int)(_menuBackground.Width * scale);
+        var height = (int)(_menuBackground.Height * scale);
+        return new Rectangle(viewport.Center.X - width / 2, viewport.Center.Y - height / 2, width, height);
+    }
+
+    private void DrawMenu()
+    {
+        _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
+        _spriteBatch.Draw(_menuBackground, GetMenuBounds(), Color.White);
+        _playButton.Draw(_spriteBatch);
+        _exitButton.Draw(_spriteBatch);
+        _spriteBatch.End();
+    }
+
+    private void DrawPlaying()
+    {
         _mapRenderer.UpdateLayout(_city.Map, _hud.GetMapBounds(GraphicsDevice.Viewport.Bounds));
         var canBuild = _hoveredCell is { } cell
             && _city.CheckConstruction(cell, _selectedBuilding) == ConstructionResult.Success;
@@ -151,12 +249,11 @@ public sealed class Game1 : Game
         _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _selectedBuilding, _message,
             _actionHovered, _persistence.Status);
         _spriteBatch.End();
-
-        base.Draw(gameTime);
     }
 
     private void StartNewGame()
     {
+        _hasStarted = true;
         _city = new CityState(MapWidth, MapHeight);
         _hoveredCell = null;
         _selectedBuilding = BuildingType.House;
