@@ -17,7 +17,7 @@ public sealed class SessionPersistence
     private readonly bool _invalidConfiguration;
     private readonly List<Task<bool>> _pendingSaves = new();
     private Task<long?> _startTask = Task.FromResult<long?>(null);
-    private Task<bool> _constructionTask = Task.FromResult(true);
+    private Task<bool> _writeTask = Task.FromResult(true);
     private Task<bool>? _saveTask;
 
     public SessionPersistence(MySqlSessionRepository? repository, string playerName = "Jugador",
@@ -42,8 +42,8 @@ public sealed class SessionPersistence
 
             if (!_startTask.IsCompleted) return DatabaseStatus.Connecting;
             if (!_startTask.Result.HasValue) return DatabaseStatus.Unavailable;
-            return !_constructionTask.IsCompleted ? DatabaseStatus.Saving
-                : _constructionTask.Result ? DatabaseStatus.Ready : DatabaseStatus.Failed;
+            return !_writeTask.IsCompleted ? DatabaseStatus.Saving
+                : _writeTask.Result ? DatabaseStatus.Ready : DatabaseStatus.Failed;
         }
     }
 
@@ -66,7 +66,7 @@ public sealed class SessionPersistence
     public void StartNewSession()
     {
         _saveTask = null;
-        _constructionTask = Task.FromResult(true);
+        _writeTask = Task.FromResult(true);
         _pendingSaves.RemoveAll(task => task.IsCompleted);
         _startTask = _repository is null ? Task.FromResult<long?>(null)
             : StartAsync(DateTime.UtcNow);
@@ -74,13 +74,23 @@ public sealed class SessionPersistence
 
     public void RecordConstruction(CellPosition position, BuildingType building)
     {
+        QueueWrite((sessionId, token) => _repository!.SaveConstructionAsync(sessionId, position, building, token));
+    }
+
+    public void RecordResources(int turn, int money, int population)
+    {
+        QueueWrite((sessionId, token) => _repository!.SaveResourcesAsync(sessionId, turn, money, population, token));
+    }
+
+    private void QueueWrite(Func<long, CancellationToken, Task> write)
+    {
         if (_repository is null || _saveTask is not null)
         {
             return;
         }
 
-        _constructionTask = SaveConstructionAsync(_startTask, _constructionTask, position, building);
-        _pendingSaves.Add(_constructionTask);
+        _writeTask = SaveWriteAsync(_startTask, _writeTask, write);
+        _pendingSaves.Add(_writeTask);
     }
 
     public void FinishSession(CityResult result)
@@ -90,7 +100,7 @@ public sealed class SessionPersistence
             return;
         }
 
-        _saveTask = SaveAsync(_startTask, _constructionTask, DateTime.UtcNow, result);
+        _saveTask = SaveAsync(_startTask, _writeTask, DateTime.UtcNow, result);
         _pendingSaves.Add(_saveTask);
     }
 
@@ -111,10 +121,10 @@ public sealed class SessionPersistence
         }
     }
 
-    private async Task<bool> SaveConstructionAsync(Task<long?> startTask, Task<bool> previousConstruction,
-        CellPosition position, BuildingType building)
+    private async Task<bool> SaveWriteAsync(Task<long?> startTask, Task<bool> previousWrite,
+        Func<long, CancellationToken, Task> write)
     {
-        if (!await previousConstruction.ConfigureAwait(false))
+        if (!await previousWrite.ConfigureAwait(false))
         {
             return false;
         }
@@ -128,21 +138,20 @@ public sealed class SessionPersistence
                 return false;
             }
 
-            await _repository!.SaveConstructionAsync(sessionId.Value, position, building, timeout.Token)
-                .ConfigureAwait(false);
+            await write(sessionId.Value, timeout.Token).ConfigureAwait(false);
             return true;
         }
         catch (Exception exception) when (IsDatabaseFailure(exception))
         {
-            Trace.TraceError("Construction persistence failed ({0}).", exception.GetType().Name);
+            Trace.TraceError("Session data persistence failed ({0}).", exception.GetType().Name);
             return false;
         }
     }
 
-    private async Task<bool> SaveAsync(Task<long?> startTask, Task<bool> constructions,
+    private async Task<bool> SaveAsync(Task<long?> startTask, Task<bool> writes,
         DateTime endedAtUtc, CityResult result)
     {
-        if (!await constructions.ConfigureAwait(false))
+        if (!await writes.ConfigureAwait(false))
         {
             return false;
         }
