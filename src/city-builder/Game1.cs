@@ -55,7 +55,9 @@ public sealed class Game1 : Game
         var grassTexture = Content.Load<Texture2D>("Textures/Tiles/pasto");
         var buildingsTexture = Content.Load<Texture2D>("Textures/Buildings/pixel-city");
         var parkTexture = Content.Load<Texture2D>("Textures/Buildings/park");
-        _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture, buildingsTexture, parkTexture);
+        var utilitiesTexture = Content.Load<Texture2D>("Textures/Buildings/municipal-buildings");
+        _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture, buildingsTexture, parkTexture,
+            utilitiesTexture);
         _hud = new GameHud(GraphicsDevice, Content.Load<SpriteFont>("Fonts/Ui"));
         _previousMouse = Mouse.GetState();
         _previousKeyboard = Keyboard.GetState();
@@ -173,7 +175,8 @@ public sealed class Game1 : Game
                 var completedTurn = _city.Turn;
                 if (_city.AdvanceTurn())
                 {
-                    _persistence.RecordResources(completedTurn, _city.Money, _city.Population);
+                    _persistence.RecordResources(completedTurn, _city.Money, _city.Population,
+                        _city.Electricity, _city.Water);
                 }
                 _message = null;
                 _messageSeconds = 0;
@@ -195,6 +198,8 @@ public sealed class Game1 : Game
                 {
                     ConstructionResult.InsufficientFunds => "Dinero insuficiente",
                     ConstructionResult.Occupied => "Esta celda está ocupada",
+                    ConstructionResult.InsufficientElectricity => "Electricidad insuficiente",
+                    ConstructionResult.InsufficientWater => "Agua insuficiente",
                     ConstructionResult.InsufficientPopulation =>
                         $"Se necesitan más de {BuildingCatalog.Get(_selectedBuilding).MinimumPopulation - 1} habitantes",
                     _ => null

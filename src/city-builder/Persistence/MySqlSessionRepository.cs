@@ -56,6 +56,8 @@ public sealed class MySqlSessionRepository(string connectionString)
             BuildingType.House => "Casa de Madera",
             BuildingType.Shop => "Tienda Local",
             BuildingType.Park => "Parque Central",
+            BuildingType.PowerPlant => "Planta Eléctrica",
+            BuildingType.WaterPlant => "Planta de Agua",
             _ => throw new ArgumentOutOfRangeException(nameof(building))
         };
 
@@ -94,7 +96,7 @@ public sealed class MySqlSessionRepository(string connectionString)
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public async Task SaveResourcesAsync(long sessionId, int turn, int money, int population,
+    public async Task SaveResourcesAsync(long sessionId, int turn, int money, int population, int electricity, int water,
         CancellationToken cancellationToken)
     {
         await using var connection = new MySqlConnection(connectionString);
@@ -102,12 +104,14 @@ public sealed class MySqlSessionRepository(string connectionString)
 
         using var resourceInsert = new MySqlCommand("""
             INSERT INTO resource_logs (session_id, turno, dinero, poblacion, electricidad, agua)
-            VALUES (@session, @turn, @money, @population, 0, 0);
+            VALUES (@session, @turn, @money, @population, @electricity, @water);
             """, connection);
         resourceInsert.Parameters.AddWithValue("@session", sessionId);
         resourceInsert.Parameters.AddWithValue("@turn", turn);
         resourceInsert.Parameters.AddWithValue("@money", money);
         resourceInsert.Parameters.AddWithValue("@population", population);
+        resourceInsert.Parameters.AddWithValue("@electricity", electricity);
+        resourceInsert.Parameters.AddWithValue("@water", water);
         await resourceInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 

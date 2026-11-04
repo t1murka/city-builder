@@ -12,6 +12,8 @@ public sealed class CityState
     public int Turn { get; private set; } = 1;
     public int IncomePerTurn { get; private set; }
     public int Satisfaction { get; private set; } = 50;
+    public int Electricity { get; private set; } = 10;
+    public int Water { get; private set; } = 10;
     public CityResult? Result { get; private set; }
     public bool IsFinished => Result is not null;
 
@@ -46,9 +48,19 @@ public sealed class CityState
             return ConstructionResult.InsufficientPopulation;
         }
 
-        return Money >= definition.Cost
-            ? ConstructionResult.Success
-            : ConstructionResult.InsufficientFunds;
+        if (Money < definition.Cost)
+        {
+            return ConstructionResult.InsufficientFunds;
+        }
+
+        if (Electricity + definition.ElectricityChange < 0)
+        {
+            return ConstructionResult.InsufficientElectricity;
+        }
+
+        return Water + definition.WaterChange < 0
+            ? ConstructionResult.InsufficientWater
+            : ConstructionResult.Success;
     }
 
     public ConstructionResult TryConstruct(CellPosition position, BuildingType type)
@@ -69,6 +81,8 @@ public sealed class CityState
         Population += definition.PopulationBenefit;
         IncomePerTurn += definition.IncomePerTurn;
         Satisfaction = Math.Clamp(Satisfaction + definition.SatisfactionBenefit, 0, 100);
+        Electricity += definition.ElectricityChange;
+        Water += definition.WaterChange;
         return ConstructionResult.Success;
     }
 

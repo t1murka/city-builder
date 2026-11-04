@@ -3,6 +3,9 @@
 ## Sin publicar
 
 ### Agregado
+- Capacidad de electricidad y agua, consumo por edificios y validación antes de construir.
+- Centrales eléctricas y plantas de agua de $800, con 20 unidades adicionales de capacidad.
+- Indicadores de recursos disponibles y persistencia de sus valores reales por turno.
 - Historial de dinero y población al finalizar cada turno, con guardado asíncrono en MySQL.
 - Menú principal para iniciar o continuar la partida y salir del juego; Esc vuelve al menú.
 - Registro de construcciones exitosas en el mapa y el historial de la partida en MySQL.

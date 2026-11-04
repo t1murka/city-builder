@@ -4,5 +4,7 @@ public enum BuildingType
 {
     House,
     Shop,
-    Park
+    Park,
+    PowerPlant,
+    WaterPlant
 }
