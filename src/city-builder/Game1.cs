@@ -170,7 +170,11 @@ public sealed class Game1 : Game
             }
             else if (_actionHovered)
             {
-                _city.AdvanceTurn();
+                var completedTurn = _city.Turn;
+                if (_city.AdvanceTurn())
+                {
+                    _persistence.RecordResources(completedTurn, _city.Money, _city.Population);
+                }
                 _message = null;
                 _messageSeconds = 0;
                 if (_city.IsFinished)

@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Agregado
+- Historial de dinero y población al finalizar cada turno, con guardado asíncrono en MySQL.
 - Menú principal para iniciar o continuar la partida y salir del juego; Esc vuelve al menú.
 - Registro de construcciones exitosas en el mapa y el historial de la partida en MySQL.
 - Conexión configurable a MySQL y registro de jugadores, partidas y resultados finales.

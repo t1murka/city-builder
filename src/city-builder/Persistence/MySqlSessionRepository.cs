@@ -94,6 +94,23 @@ public sealed class MySqlSessionRepository(string connectionString)
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    public async Task SaveResourcesAsync(long sessionId, int turn, int money, int population,
+        CancellationToken cancellationToken)
+    {
+        await using var connection = new MySqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+
+        using var resourceInsert = new MySqlCommand("""
+            INSERT INTO resource_logs (session_id, turno, dinero, poblacion, electricidad, agua)
+            VALUES (@session, @turn, @money, @population, 0, 0);
+            """, connection);
+        resourceInsert.Parameters.AddWithValue("@session", sessionId);
+        resourceInsert.Parameters.AddWithValue("@turn", turn);
+        resourceInsert.Parameters.AddWithValue("@money", money);
+        resourceInsert.Parameters.AddWithValue("@population", population);
+        await resourceInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
     public async Task SaveResultAsync(long sessionId, DateTime endedAtUtc, CityResult result,
         CancellationToken cancellationToken)
     {

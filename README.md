@@ -17,3 +17,6 @@ dotnet run --project src/city-builder/city-builder.csproj
 3. Configura servidor, puerto, usuario, contraseña y `PlayerName`. La base es `city_builder_mini`.
 
 Sin `database.json`, el guardado en MySQL está desactivado.
+
+`resource_logs` registra dinero y población al finalizar cada turno, después de cobrar el balance.
+Electricidad y agua se guardan como 0 hasta implementar su mecánica.
