@@ -2,7 +2,7 @@
   "Server": "localhost",
   "Port": 3306,
   "Database": "city_builder_mini",
-  "User": "city_builder",
+  "User": "root",
   "Password": "",
   "PlayerName": "Jugador"
 }

@@ -7,5 +7,7 @@ public enum ConstructionResult
     Occupied,
     InsufficientFunds,
     SessionFinished,
-    InsufficientPopulation
+    InsufficientPopulation,
+    InsufficientElectricity,
+    InsufficientWater
 }

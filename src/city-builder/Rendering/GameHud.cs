@@ -19,7 +19,7 @@ public sealed class GameHud : IDisposable
     private readonly SpriteFont _font;
     private readonly Texture2D _pixel;
     private static readonly BuildingType[] BuildingOptions =
-        { BuildingType.House, BuildingType.Shop, BuildingType.Park };
+        { BuildingType.House, BuildingType.Shop, BuildingType.Park, BuildingType.PowerPlant, BuildingType.WaterPlant };
 
     public GameHud(GraphicsDevice graphicsDevice, SpriteFont font)
     {
@@ -61,11 +61,13 @@ public sealed class GameHud : IDisposable
             throw new ArgumentOutOfRangeException(nameof(building));
         }
 
-        var availableWidth = viewport.Width - Padding * 2 - 8 * (BuildingOptions.Length - 1);
-        var width = Math.Max(1, Math.Min(160, availableWidth / BuildingOptions.Length));
+        var columns = GetBuildingColumnCount(viewport.Width);
+        var availableWidth = viewport.Width - Padding * 2 - 8 * (columns - 1);
+        var width = Math.Max(1, Math.Min(160, availableWidth / columns));
         var bounds = new Rectangle(
-            viewport.X + Padding + index * (width + 8),
-            viewport.Y + VerticalPadding + GetBuildingRow(viewport.Width) * RowHeight, width, ControlHeight);
+            viewport.X + Padding + index % columns * (width + 8),
+            viewport.Y + VerticalPadding + (GetBuildingRow(viewport.Width) + index / columns) * RowHeight,
+            width, ControlHeight);
         return viewport.Contains(bounds) ? bounds : Rectangle.Empty;
     }
 
@@ -98,10 +100,12 @@ public sealed class GameHud : IDisposable
 
         var moneyColor = city.Money < 0 ? new Color(250, 142, 132) : textColor;
         DrawCell(spriteBatch, viewport, 0, $"Dinero: {FormatMoney(city.Money)}", moneyColor);
-        DrawCell(spriteBatch, viewport, 1, $"Población: {city.Population}", textColor);
-        DrawCell(spriteBatch, viewport, 2, $"Satisfacción: {city.Satisfaction}%", textColor);
-        DrawCell(spriteBatch, viewport, 3, $"Turno: {city.Turn}/{CityState.MaxTurns}", textColor);
-        DrawCell(spriteBatch, viewport, 4, $"Balance/turno: {FormatMoneyChange(city.IncomePerTurn)}", incomeColor);
+        DrawCell(spriteBatch, viewport, 1, $"Hab.: {city.Population} | Satisf.: {city.Satisfaction}%", textColor);
+        DrawCell(spriteBatch, viewport, 2, $"Turno: {city.Turn}/{CityState.MaxTurns}", textColor);
+        DrawCell(spriteBatch, viewport, 3, $"Balance/turno: {FormatMoneyChange(city.IncomePerTurn)}", incomeColor);
+        var utilityColor = city.Electricity == 0 || city.Water == 0
+            ? new Color(250, 198, 132) : textColor;
+        DrawCell(spriteBatch, viewport, 4, $"Luz: {city.Electricity} | Agua: {city.Water}", utilityColor);
 
         if (city.Result is { } result)
         {
@@ -134,6 +138,14 @@ public sealed class GameHud : IDisposable
             {
                 details += $" | Población > {definition.MinimumPopulation - 1}";
             }
+            if (definition.ElectricityChange != 0)
+            {
+                details += $" | Luz: {definition.ElectricityChange:+0;-0}";
+            }
+            if (definition.WaterChange != 0)
+            {
+                details += $" | Agua: {definition.WaterChange:+0;-0}";
+            }
             var hint = message ?? details;
             var hintColor = message is null ? new Color(157, 175, 191) : new Color(250, 142, 132);
             DrawLabel(spriteBatch, hint, new Vector2(viewport.X + Padding, viewport.Bottom - 28),
@@ -157,7 +169,14 @@ public sealed class GameHud : IDisposable
 
     private static int GetBuildingRow(int width) => NextTurnCellIndex / GetColumnCount(width) + 1;
 
-    private static int GetPanelHeight(int width) => VerticalPadding * 2 + (GetBuildingRow(width) + 1) * RowHeight;
+    private static int GetBuildingColumnCount(int width) => width < CompactWidth ? 3 : BuildingOptions.Length;
+
+    private static int GetPanelHeight(int width)
+    {
+        var columns = GetBuildingColumnCount(width);
+        var rows = (BuildingOptions.Length + columns - 1) / columns;
+        return VerticalPadding * 2 + (GetBuildingRow(width) + rows) * RowHeight;
+    }
 
     private static string FormatMoney(int amount) => amount >= 0 ? $"${amount}" : $"-${-(long)amount}";
 
