@@ -58,6 +58,7 @@ public sealed class MySqlSessionRepository(string connectionString)
             BuildingType.Park => "Parque Central",
             BuildingType.PowerPlant => "Planta Eléctrica",
             BuildingType.WaterPlant => "Planta de Agua",
+            BuildingType.Factory => "Fábrica de Carbón",
             _ => throw new ArgumentOutOfRangeException(nameof(building))
         };
 

@@ -56,8 +56,9 @@ public sealed class Game1 : Game
         var buildingsTexture = Content.Load<Texture2D>("Textures/Buildings/pixel-city");
         var parkTexture = Content.Load<Texture2D>("Textures/Buildings/park");
         var utilitiesTexture = Content.Load<Texture2D>("Textures/Buildings/municipal-buildings");
+        var factoryTexture = Content.Load<Texture2D>("Textures/Buildings/factory");
         _mapRenderer = new IsometricMapRenderer(GraphicsDevice, grassTexture, buildingsTexture, parkTexture,
-            utilitiesTexture);
+            utilitiesTexture, factoryTexture);
         _hud = new GameHud(GraphicsDevice, Content.Load<SpriteFont>("Fonts/Ui"));
         _previousMouse = Mouse.GetState();
         _previousKeyboard = Keyboard.GetState();

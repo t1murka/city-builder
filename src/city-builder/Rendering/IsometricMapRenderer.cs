@@ -17,11 +17,13 @@ public sealed class IsometricMapRenderer : IDisposable
     private static readonly Rectangle ShopSource = new(265, 374, 34, 23);
     private static readonly Rectangle PowerPlantSource = new(140, 136, 34, 31);
     private static readonly Rectangle WaterPlantSource = new(263, 138, 34, 32);
+    private static readonly Rectangle FactorySource = new(15, 9, 35, 47);
 
     private readonly Texture2D _grassTexture;
     private readonly Texture2D _buildingsTexture;
     private readonly Texture2D _parkTexture;
     private readonly Texture2D _utilitiesTexture;
+    private readonly Texture2D _factoryTexture;
     private readonly Texture2D _diamondTexture;
     private readonly Texture2D _pixelTexture;
     private IsometricProjection _projection = new(BaseTileWidth, BaseTileHeight, NumericsVector2.Zero);
@@ -30,12 +32,13 @@ public sealed class IsometricMapRenderer : IDisposable
     private int _mapHeight;
 
     public IsometricMapRenderer(GraphicsDevice graphicsDevice, Texture2D grassTexture,
-        Texture2D buildingsTexture, Texture2D parkTexture, Texture2D utilitiesTexture)
+        Texture2D buildingsTexture, Texture2D parkTexture, Texture2D utilitiesTexture, Texture2D factoryTexture)
     {
         _grassTexture = grassTexture;
         _buildingsTexture = buildingsTexture;
         _parkTexture = parkTexture;
         _utilitiesTexture = utilitiesTexture;
+        _factoryTexture = factoryTexture;
         _diamondTexture = CreateDiamondTexture(graphicsDevice);
         _pixelTexture = new Texture2D(graphicsDevice, 1, 1);
         _pixelTexture.SetData(new[] { Color.White });
@@ -150,6 +153,7 @@ public sealed class IsometricMapRenderer : IDisposable
             BuildingType.Park => _parkTexture.Bounds,
             BuildingType.PowerPlant => PowerPlantSource,
             BuildingType.WaterPlant => WaterPlantSource,
+            BuildingType.Factory => FactorySource,
             _ => throw new InvalidOperationException("Unsupported building type.")
         };
 
@@ -162,6 +166,7 @@ public sealed class IsometricMapRenderer : IDisposable
         {
             BuildingType.Park => _parkTexture,
             BuildingType.PowerPlant or BuildingType.WaterPlant => _utilitiesTexture,
+            BuildingType.Factory => _factoryTexture,
             _ => _buildingsTexture
         };
         spriteBatch.Draw(texture, bottom, source, color, 0f, origin, scale, SpriteEffects.None, 0f);
