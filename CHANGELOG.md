@@ -3,6 +3,7 @@
 ## Sin publicar
 
 ### Agregado
+- Subsidios y festivales aleatorios entre turnos, con aviso en pantalla e historial en MySQL.
 - Fábrica de $1000 con ingresos de $300 por turno y un efecto de -5 habitantes.
 - Requisitos de fábrica: al menos 5 habitantes y 3 unidades disponibles de luz y agua.
 - Capacidad de electricidad y agua, consumo por edificios y validación antes de construir.
