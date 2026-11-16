@@ -3,6 +3,8 @@
 ## Sin publicar
 
 ### Agregado
+- Fábrica de $1000 con ingresos de $300 por turno y un efecto de -5 habitantes.
+- Requisitos de fábrica: al menos 5 habitantes y 3 unidades disponibles de luz y agua.
 - Capacidad de electricidad y agua, consumo por edificios y validación antes de construir.
 - Centrales eléctricas y plantas de agua de $800, con 20 unidades adicionales de capacidad.
 - Indicadores de recursos disponibles y persistencia de sus valores reales por turno.

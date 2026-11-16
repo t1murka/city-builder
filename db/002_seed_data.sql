@@ -4,7 +4,7 @@ INSERT INTO building_types (nombre, costo, beneficio_poblacion, beneficio_dinero
 ('Casa de Madera', 100, 4, 10, '1 de electricidad y 1 de agua disponibles', 0),
 ('Edificio de Apartamentos', 500, 20, 0, 'Requiere Agua y Electricidad', 0),
 ('Tienda Local', 250, 0, 50, 'Población > 10; 2 de electricidad y 2 de agua disponibles', 0),
-('Fábrica de Carbón', 1000, -5, 300, 'Lejos de zona residencial', 0),
+('Fábrica de Carbón', 1000, -5, 300, 'Población >= 5; 3 de electricidad y 3 de agua disponibles', 0),
 ('Parque Central', 300, 0, -10, 'Ninguno', 10),
 ('Planta Eléctrica', 800, 0, 0, 'Ninguno', 0),
 ('Planta de Agua', 800, 0, 0, 'Ninguno', 0);

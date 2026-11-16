@@ -6,5 +6,6 @@ public enum BuildingType
     Shop,
     Park,
     PowerPlant,
-    WaterPlant
+    WaterPlant,
+    Factory
 }

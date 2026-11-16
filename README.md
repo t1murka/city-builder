@@ -23,3 +23,6 @@ Sin `database.json`, el guardado en MySQL está desactivado.
 La ciudad empieza con 10 de luz y 10 de agua. Cada casa utiliza 1 de cada recurso y cada tienda, 2.
 Las centrales eléctricas y plantas de agua cuestan $800 y añaden 20 de su recurso.
 Son capacidades disponibles: no se gastan de nuevo en cada turno.
+
+La fábrica cuesta $1000, genera $300 por turno y resta 5 habitantes.
+Requiere al menos 5 habitantes y utiliza 3 de luz y 3 de agua.

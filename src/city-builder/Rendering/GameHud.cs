@@ -19,7 +19,8 @@ public sealed class GameHud : IDisposable
     private readonly SpriteFont _font;
     private readonly Texture2D _pixel;
     private static readonly BuildingType[] BuildingOptions =
-        { BuildingType.House, BuildingType.Shop, BuildingType.Park, BuildingType.PowerPlant, BuildingType.WaterPlant };
+        { BuildingType.House, BuildingType.Shop, BuildingType.Park, BuildingType.PowerPlant, BuildingType.WaterPlant,
+            BuildingType.Factory };
 
     public GameHud(GraphicsDevice graphicsDevice, SpriteFont font)
     {
@@ -124,19 +125,21 @@ public sealed class GameHud : IDisposable
 
         if (viewport.Height >= panelHeight + 40)
         {
-            var details = $"{definition.Name}: ${definition.Cost}";
-            if (definition.PopulationBenefit > 0)
+            var compact = viewport.Width < CompactWidth;
+            var details = compact ? $"${definition.Cost}" : $"{definition.Name}: ${definition.Cost}";
+            if (definition.PopulationBenefit != 0)
             {
-                details += $" | +{definition.PopulationBenefit} hab.";
+                details += $" | {definition.PopulationBenefit:+0;-0} hab.";
             }
-            details += $" | {FormatMoneyChange(definition.IncomePerTurn)}/turno";
+            details += $" | {FormatMoneyChange(definition.IncomePerTurn)}/{(compact ? "t" : "turno")}";
             if (definition.SatisfactionBenefit > 0)
             {
                 details += $" | +{definition.SatisfactionBenefit} satisfacción";
             }
             if (definition.MinimumPopulation > 0)
             {
-                details += $" | Población > {definition.MinimumPopulation - 1}";
+                details += compact ? $" | Hab.>={definition.MinimumPopulation}"
+                    : $" | Población > {definition.MinimumPopulation - 1}";
             }
             if (definition.ElectricityChange != 0)
             {
