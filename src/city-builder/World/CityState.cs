@@ -14,6 +14,7 @@ public sealed class CityState
     public int Satisfaction { get; private set; } = 50;
     public int Electricity { get; private set; } = 10;
     public int Water { get; private set; } = 10;
+    public CityEvent? LastEvent { get; private set; }
     public CityResult? Result { get; private set; }
     public bool IsFinished => Result is not null;
 
@@ -96,13 +97,31 @@ public sealed class CityState
         Money = checked(Money + IncomePerTurn);
         if (Turn == MaxTurns)
         {
+            LastEvent = null;
             Result = new CityResult(Population, Money, Satisfaction);
         }
         else
         {
+            LastEvent = RollEvent();
             Turn++;
         }
 
         return true;
+    }
+
+    private CityEvent? RollEvent()
+    {
+        switch (Random.Shared.Next(10))
+        {
+            case 0:
+                Money = checked(Money + 500);
+                return CityEvent.GovernmentSubsidy;
+            case 1 when Money >= 100 && Satisfaction < 100:
+                Money -= 100;
+                Satisfaction = Math.Min(100, Satisfaction + 10);
+                return CityEvent.CityFestival;
+            default:
+                return null;
+        }
     }
 }

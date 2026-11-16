@@ -98,15 +98,18 @@ public sealed class MySqlSessionRepository(string connectionString)
     }
 
     public async Task SaveResourcesAsync(long sessionId, int turn, int money, int population, int electricity, int water,
-        CancellationToken cancellationToken)
+        CityEvent? cityEvent, CancellationToken cancellationToken)
     {
         await using var connection = new MySqlConnection(connectionString);
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = cityEvent.HasValue
+            ? await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false)
+            : null;
 
         using var resourceInsert = new MySqlCommand("""
             INSERT INTO resource_logs (session_id, turno, dinero, poblacion, electricidad, agua)
             VALUES (@session, @turn, @money, @population, @electricity, @water);
-            """, connection);
+            """, connection, transaction);
         resourceInsert.Parameters.AddWithValue("@session", sessionId);
         resourceInsert.Parameters.AddWithValue("@turn", turn);
         resourceInsert.Parameters.AddWithValue("@money", money);
@@ -114,6 +117,31 @@ public sealed class MySqlSessionRepository(string connectionString)
         resourceInsert.Parameters.AddWithValue("@electricity", electricity);
         resourceInsert.Parameters.AddWithValue("@water", water);
         await resourceInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+
+        if (transaction is null)
+        {
+            return;
+        }
+
+        var eventName = cityEvent switch
+        {
+            CityEvent.GovernmentSubsidy => "Subsidio del Gobierno",
+            CityEvent.CityFestival => "Festival de la Ciudad",
+            _ => throw new ArgumentOutOfRangeException(nameof(cityEvent))
+        };
+        using var eventInsert = new MySqlCommand("""
+            INSERT INTO event_logs (session_id, turno, event_id)
+            SELECT @session, @turn, id FROM events WHERE nombre = @name;
+            """, connection, transaction);
+        eventInsert.Parameters.AddWithValue("@session", sessionId);
+        eventInsert.Parameters.AddWithValue("@turn", turn);
+        eventInsert.Parameters.AddWithValue("@name", eventName);
+        if (await eventInsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+        {
+            throw new InvalidOperationException("The city event does not exist in the database.");
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async Task SaveResultAsync(long sessionId, DateTime endedAtUtc, CityResult result,

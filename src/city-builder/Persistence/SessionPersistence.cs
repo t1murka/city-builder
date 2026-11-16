@@ -77,10 +77,11 @@ public sealed class SessionPersistence
         QueueWrite((sessionId, token) => _repository!.SaveConstructionAsync(sessionId, position, building, token));
     }
 
-    public void RecordResources(int turn, int money, int population, int electricity, int water)
+    public void RecordResources(int turn, int money, int population, int electricity, int water,
+        CityEvent? cityEvent)
     {
         QueueWrite((sessionId, token) =>
-            _repository!.SaveResourcesAsync(sessionId, turn, money, population, electricity, water, token));
+            _repository!.SaveResourcesAsync(sessionId, turn, money, population, electricity, water, cityEvent, token));
     }
 
     private void QueueWrite(Func<long, CancellationToken, Task> write)

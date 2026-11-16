@@ -177,10 +177,10 @@ public sealed class Game1 : Game
                 if (_city.AdvanceTurn())
                 {
                     _persistence.RecordResources(completedTurn, _city.Money, _city.Population,
-                        _city.Electricity, _city.Water);
+                        _city.Electricity, _city.Water, _city.LastEvent);
                 }
                 _message = null;
-                _messageSeconds = 0;
+                _messageSeconds = _city.LastEvent.HasValue ? 4 : 0;
                 if (_city.IsFinished)
                 {
                     _actionHovered = false;
@@ -256,8 +256,9 @@ public sealed class Game1 : Game
         _spriteBatch.End();
 
         _spriteBatch.Begin(samplerState: SamplerState.LinearClamp);
+        var eventNotice = _messageSeconds > 0 && _message is null ? _city.LastEvent : null;
         _hud.Draw(_spriteBatch, GraphicsDevice.Viewport.Bounds, _city, _selectedBuilding, _message,
-            _actionHovered, _persistence.Status);
+            eventNotice, _actionHovered, _persistence.Status);
         _spriteBatch.End();
     }
 

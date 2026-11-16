@@ -88,7 +88,7 @@ public sealed class GameHud : IDisposable
     }
 
     public void Draw(SpriteBatch spriteBatch, Rectangle viewport, CityState city, BuildingType selectedBuilding,
-        string? message, bool actionHovered, DatabaseStatus databaseStatus)
+        string? message, CityEvent? eventNotice, bool actionHovered, DatabaseStatus databaseStatus)
     {
         var panelHeight = GetPanelHeight(viewport.Width);
         var panel = new Rectangle(viewport.X, viewport.Y, viewport.Width, Math.Min(panelHeight, viewport.Height));
@@ -149,8 +149,15 @@ public sealed class GameHud : IDisposable
             {
                 details += $" | Agua: {definition.WaterChange:+0;-0}";
             }
-            var hint = message ?? details;
-            var hintColor = message is null ? new Color(157, 175, 191) : new Color(250, 142, 132);
+            var eventText = eventNotice switch
+            {
+                CityEvent.GovernmentSubsidy => "Subsidio del gobierno: +$500",
+                CityEvent.CityFestival => "Festival de la ciudad: -$100, aumenta la satisfacción",
+                _ => null
+            };
+            var hint = message ?? eventText ?? details;
+            var hintColor = message is not null ? new Color(250, 142, 132)
+                : eventText is not null ? new Color(154, 218, 173) : new Color(157, 175, 191);
             DrawLabel(spriteBatch, hint, new Vector2(viewport.X + Padding, viewport.Bottom - 28),
                 availableWidth, hintColor, 0.85f);
         }
