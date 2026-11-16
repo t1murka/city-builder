@@ -10,7 +10,7 @@ public sealed record DatabaseSettings
     public string Server { get; init; } = "localhost";
     public uint Port { get; init; } = 3306;
     public string Database { get; init; } = "city_builder_mini";
-    public string User { get; init; } = "city_builder";
+    public string User { get; init; } = "root";
     public string Password { get; init; } = "";
     public string PlayerName { get; init; } = "Jugador";
 
