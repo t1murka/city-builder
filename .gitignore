@@ -18,3 +18,5 @@ Content/obj/
 
 Thumbs.db
 desktop.ini
+
+src/city-builder/database.json
